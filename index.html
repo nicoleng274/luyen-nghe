@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luyện Nghe & Chép Chính Tả</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #f2f4f7;
+      margin: 0;
+      padding: 12px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+
+    .box {
+      background: #ffffff;
+      padding: 14px;
+      border-radius: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      margin: 8px 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      background: #1e88e5;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:active {
+      background: #1565c0;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    iframe {
+      width: 100%;
+      border-radius: 12px;
+    }
+
+    .result {
+      margin-top: 12px;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .correct { color: #2e7d32; }
+    .wrong { color: #c62828; }
+
+    .sentence {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .sentence input {
+      display: inline-block;
+      width: 120px;
+      margin: 0 4px;
+    }
+
+    @media (max-width: 480px) {
+      .sentence input {
+        width: 100%;
+        margin: 6px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎧 Luyện Nghe & Chép Chính Tả</h1>
+
+<div class="box">
+  <h2>👤 Thông tin học sinh</h2>
+  <input id="studentName" type="text" placeholder="Nhập tên của bạn">
+</div>
+
+<div class="box">
+  <h2>1️⃣ Nghe bài</h2>
+  <iframe height="200" src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe>
+
+  <p style="margin:10px 0">Hoặc chọn file nghe từ máy:</p>
+  <input type="file" accept="audio/*" onchange="loadAudio(event)">
+  <audio id="audio" controls></audio>
+</div>
+
+<div class="box">
+  <h2>2️⃣ Điền từ</h2>
+  <div class="sentence">
+    I <input id="q1" type="text" placeholder="(1)"> to school every day because I want to <input id="q2" type="text" placeholder="(2)"> English.
+  </div>
+
+  <button onclick="submitQuiz()">📤 Nộp bài</button>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+  function loadAudio(event) {
+    const audio = document.getElementById('audio');
+    audio.src = URL.createObjectURL(event.target.files[0]);
+  }
+
+  async function saveToSheet(name, score, total) {
+    const url = "PASTE_GOOGLE_SCRIPT_URL_HERE";
+    const data = {
+      student: name,
+      score: score,
+      total: total,
+      time: new Date().toLocaleString()
+    };
+
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  }
+
+  function submitQuiz() {
+    const answers = {
+      q1: { answer: 'go', explain: "Sau chủ ngữ 'I' dùng động từ nguyên mẫu" },
+      q2: { answer: 'learn', explain: "Cấu trúc: want to + V nguyên mẫu" }
+    };
+
+    let score = 0;
+    let total = Object.keys(answers).length;
+    let html = '';
+
+    for (let key in answers) {
+      const userAnswer = document.getElementById(key).value.trim().toLowerCase();
+      if (userAnswer === answers[key].answer) {
+        score++;
+        html += `<p class="correct">✅ Câu ${key}: Đúng</p>`;
+      } else {
+        html += `<p class="wrong">❌ Câu ${key}: Sai<br>👉 Đáp án: <b>${answers[key].answer}</b><br>📌 ${answers[key].explain}</p>`;
+      }
+    }
+
+    const name = document.getElementById("studentName").value || "Unknown";
+    saveToSheet(name, score, total);
+
+    html = `<h3>Kết quả: ${score} / ${total}</h3>` + html;
+    document.getElementById('result').innerHTML = html;
+  }
+</script>
+
+</body>
+</html>
