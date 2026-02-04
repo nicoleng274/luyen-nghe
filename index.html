@@ -19,12 +19,6 @@ button {
 .question { margin: 12px 0; }
 .correct { color: green; }
 .wrong { color: red; }
-#timer {
-  font-size: 18px;
-  font-weight: bold;
-  color: #d32f2f;
-  margin: 10px 0;
-}
 #transcript {
   background: #f5f5f5;
   padding: 10px;
@@ -59,8 +53,6 @@ button {
 
 <button id="startBtn" onclick="startExam()">▶️ Bắt đầu làm bài</button>
 
-<div id="timer">⏱ 00:00</div>
-
 <audio id="audio" controls></audio>
 
 <hr>
@@ -79,7 +71,7 @@ button {
 
 <script>
 /* ================== CONFIG ================== */
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxyXC26mTJsfNS33dJuylc_F4gHaobcJt09cjXGgbS3LRQfwpkHCZgX4XnFbG9P06Gy/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyT4bpz5jaQpHmEqHWNgjSdnFh872DMWNSB0BERxwKtaj0j-os2sAKE7h0dxrrr5gs2/exec";
 
 /* ================== LESSON DATA ================== */
 const lessons = {
@@ -104,8 +96,6 @@ const lessons = {
 };
 
 let currentLesson;
-let timer = null;
-let time = 0;
 
 /* ================== INIT ================== */
 function init() {
@@ -122,8 +112,7 @@ init();
 
 /* ================== LOAD LESSON ================== */
 function loadLesson() {
-  const key = lessonSelect.value;
-  currentLesson = lessons[key];
+  currentLesson = lessons[lessonSelect.value];
 
   audio.src = currentLesson.audio;
   audio.load();
@@ -142,9 +131,6 @@ function loadLesson() {
     index++;
   }
 
-  clearInterval(timer);
-  time = 0;
-  timerDisplay();
   startBtn.disabled = false;
   submitBtn.disabled = true;
   result.innerHTML = "";
@@ -155,26 +141,13 @@ function startExam() {
   document.querySelectorAll(".answer").forEach(i => i.disabled = false);
   startBtn.disabled = true;
   submitBtn.disabled = false;
-
-  timer = setInterval(() => {
-    time++;
-    timerDisplay();
-  }, 1000);
-}
-
-function timerDisplay() {
-  const m = String(Math.floor(time / 60)).padStart(2, "0");
-  const s = String(time % 60).padStart(2, "0");
-  timer.innerText = `⏱ ${m}:${s}`;
 }
 
 /* ================== SUBMIT ================== */
 async function submitExam() {
-  clearInterval(timer);
-
   let score = 0;
   let total = Object.keys(currentLesson.questions).length;
-  let html = `<h3>Kết quả (${score}/${total})</h3>`;
+  let html = "";
 
   for (let q in currentLesson.questions) {
     const user = document.getElementById(q).value.trim().toLowerCase();
@@ -185,31 +158,27 @@ async function submitExam() {
       html += `<p class="correct">✔ ${q} đúng</p>`;
     } else {
       html += `<p class="wrong">❌ ${q} sai<br>
-        Đáp án: <b>${answer}</b><br>
-        ${explain}</p>`;
+        Đáp án: <b>${answer}</b><br>${explain}</p>`;
     }
   }
 
   result.innerHTML = `<h3>Kết quả: ${score}/${total}</h3>` + html;
 
-  try {
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        lesson: lessonSelect.value,                 // tên sheet: lesson1, lesson2
-        class: studentClass.value || "",            // 🔴 LẤY TỪ INPUT LỚP
-        student: studentName.value || "Unknown",
-        score: score,
-        total: total,
-        date: new Date().toLocaleDateString("vi-VN"),
-        time: `${Math.floor(time / 60)}:${String(time % 60).padStart(2, "0")}`
-      })
-    });
-    showPopup("✅ Đã lưu điểm");
-  } catch {
-    showPopup("❌ Lỗi lưu điểm");
-  }
+  /* ====== SEND TO GOOGLE SHEET (FIXED) ====== */
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: JSON.stringify({
+      lesson: lessonSelect.value,
+      class: studentClass.value || "",
+      student: studentName.value || "Unknown",
+      score: score,
+      total: total,
+      date: new Date().toLocaleDateString("vi-VN")
+    })
+  });
+
+  showPopup("✅ Đã lưu điểm");
 }
 
 /* ================== UI ================== */
