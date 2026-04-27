@@ -555,6 +555,9 @@ audio{width:100%;accent-color:var(--accent)}
   .bn-item.active{color:var(--accent)}
   .bn-icon{font-size:20px}
   .mc-quiz-opts{grid-template-columns:1fr}
+  #homeStatsRow{grid-template-columns:1fr 1fr!important}
+  #fcStats{grid-template-columns:1fr 1fr!important}
+  #qmodeGrid{grid-template-columns:1fr 1fr!important}
   [data-theme="light"] .mob-menu-btn{box-shadow:0 4px 16px rgba(0,0,0,.08)}
 }
 @media(min-width:769px){
@@ -868,7 +871,7 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
     <!-- Mode selector -->
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Chọn dạng bài</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+    <div id="qmodeGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
       <div class="qmode-card active" id="qm_fill" onclick="selectQMode('fill')">
         <div style="font-size:22px;margin-bottom:6px">✏️</div>
         <div style="font-size:13px;font-weight:700">Điền từ</div>
@@ -1294,11 +1297,16 @@ function ttsSpeak(word) {
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(word);
   utt.lang = 'en-US'; utt.rate = 0.85;
-  // prefer a native English voice if available
+  const doSpeak = () => {
+    const voices = window.speechSynthesis.getVoices();
+    const eng = voices.find(v => v.lang.startsWith('en') && v.localService)
+              || voices.find(v => v.lang.startsWith('en'));
+    if(eng) utt.voice = eng;
+    window.speechSynthesis.speak(utt);
+  };
   const voices = window.speechSynthesis.getVoices();
-  const eng = voices.find(v => v.lang.startsWith('en') && v.localService);
-  if(eng) utt.voice = eng;
-  window.speechSynthesis.speak(utt);
+  if(voices.length) doSpeak();
+  else window.speechSynthesis.addEventListener('voiceschanged', doSpeak, {once:true});
 }
 
 /* 7. Datamuse related phrases for phrase lookup */
@@ -1373,7 +1381,6 @@ function addAct(icon,bg,text){
 //  VOCABULARY  — table-based with detail panel
 // ═══════════════════════════════════════════
 // _curWord đã được khai báo ở trên
-let _vtFilter = 'all';
 
 async function lookupWord() {
   const w = document.getElementById('vocabInput').value.trim();
