@@ -1219,6 +1219,9 @@ audio{width:100%;accent-color:var(--accent)}
 // ═══════════════════════════════════════════
 const GS_URL = "https://script.google.com/macros/s/AKfycbyL4nDFufa4z-CsR9N_dw8Sv9hy2F4ViQ44vYOFRWPvc_O7FUNKVxwJClgozfHymmBP/exec";
 
+// HTML entity escaper — use for any user/API data inserted into innerHTML
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
 let vocabList  = JSON.parse(localStorage.getItem('eh_vocab')   ||'[]');
 let phraseList = JSON.parse(localStorage.getItem('eh_phrases') ||'[]');
 let scores     = JSON.parse(localStorage.getItem('eh_scores')  ||'[]');
@@ -1558,8 +1561,8 @@ function renderVocabTable() {
         <div class="vt-word-cell">
           <div class="vt-audio-btn" onclick="event.stopPropagation();${v.audioUrl?`playAudio('${audioSafe}')`:`ttsSpeak('${wordSafe}')`}" title="Phát âm">🔊</div>
           <div>
-            <div class="vt-word">${v.word}</div>
-            <div class="vt-ipa">${v.ipa||''}</div>
+            <div class="vt-word">${esc(v.word)}</div>
+            <div class="vt-ipa">${esc(v.ipa||'')}</div>
           </div>
         </div>
       </td>
@@ -1693,13 +1696,13 @@ function fillPanelSynAnt(entry) {
   const antEl = document.getElementById('wdAnt');
   const colEl = document.getElementById('wdColloc');
   if(synEl) synEl.innerHTML = (entry._syns||[]).length
-    ? entry._syns.slice(0,8).map(s=>`<span class="chip" onclick="lookupWordDirect('${s}')">${s}</span>`).join('')
+    ? entry._syns.slice(0,8).map(s=>`<span class="chip" data-word="${esc(s)}" onclick="lookupWordDirect(this.dataset.word)">${esc(s)}</span>`).join('')
     : '<span style="color:var(--muted);font-size:13px">Không có</span>';
   if(antEl) antEl.innerHTML = (entry._ants||[]).length
-    ? entry._ants.slice(0,6).map(a=>`<span class="chip chip-ant" onclick="lookupWordDirect('${a}')">${a}</span>`).join('')
+    ? entry._ants.slice(0,6).map(a=>`<span class="chip chip-ant" data-word="${esc(a)}" onclick="lookupWordDirect(this.dataset.word)">${esc(a)}</span>`).join('')
     : '<span style="color:var(--muted);font-size:13px">Không có</span>';
   if(colEl) colEl.innerHTML = (entry._cols||[]).length
-    ? entry._cols.map(c=>`<span class="colloc-chip" onclick="document.getElementById('phraseInput').value='${c}';sp('phrase');lookupPhrase()">${c}</span>`).join('')
+    ? entry._cols.map(c=>`<span class="colloc-chip" data-phrase="${esc(c)}" onclick="const pi=document.getElementById('phraseInput');if(pi)pi.value=this.dataset.phrase;sp('phrase');lookupPhrase()">${esc(c)}</span>`).join('')
     : '<span style="color:var(--muted);font-size:13px">Không có</span>';
 }
 
@@ -1931,11 +1934,11 @@ function renderPhraseTable(){
   const tb=document.getElementById('pTBody');
   if(!phraseList.length){tb.innerHTML='<tr><td colspan="6"><div class="empty" style="padding:24px"><div class="empty-i" style="font-size:28px">💬</div><div style="font-size:13px">Chưa có phrase nào</div></div></td></tr>';return;}
   tb.innerHTML=phraseList.map((p,i)=>`<tr>
-    <td style="font-weight:600">${p.phrase||''}</td>
-    <td><span class="tag ${TMAP[p.type||'expression']||'tag-exp'}" style="font-size:10px">${TVNAM[p.type]||p.type||''}</span></td>
-    <td>${p.vi||p.meaning_vi||''}</td>
-    <td style="color:var(--muted);font-size:12.5px;font-family:monospace">${p.structure||p.s||''}</td>
-    <td style="color:var(--muted);font-style:italic;font-size:13px">${p.example||p.ex||''}</td>
+    <td style="font-weight:600">${esc(p.phrase||'')}</td>
+    <td><span class="tag ${TMAP[p.type||'expression']||'tag-exp'}" style="font-size:10px">${esc(TVNAM[p.type]||p.type||'')}</span></td>
+    <td>${esc(p.vi||p.meaning_vi||'')}</td>
+    <td style="color:var(--muted);font-size:12.5px;font-family:monospace">${esc(p.structure||p.s||'')}</td>
+    <td style="color:var(--muted);font-style:italic;font-size:13px">${esc(p.example||p.ex||'')}</td>
     <td><button class="btn btn-g btn-sm" onclick="deletePhrase(${i})">🗑</button></td>
   </tr>`).join('');
 }
@@ -2054,8 +2057,8 @@ function renderMatchQuiz() {
   document.getElementById('qList').innerHTML=`
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center">Click từ bên trái → Click nghĩa bên phải để nối</div>
     <div class="match-grid">
-      <div class="match-col">${_matchPairs.map((p,i)=>`<div class="match-item" id="ml${i}" onclick="matchClick('L',${i})">${p.word}</div>`).join('')}</div>
-      <div class="match-col">${right.map((p,i)=>`<div class="match-item" id="mr${i}" data-word="${p.word}" onclick="matchClick('R',${i})">${p.vi}</div>`).join('')}</div>
+      <div class="match-col">${_matchPairs.map((p,i)=>`<div class="match-item" id="ml${i}" onclick="matchClick('L',${i})">${esc(p.word)}</div>`).join('')}</div>
+      <div class="match-col">${right.map((p,i)=>`<div class="match-item" id="mr${i}" data-word="${esc(p.word)}" onclick="matchClick('R',${i})">${esc(p.vi)}</div>`).join('')}</div>
     </div>
     <div style="text-align:center;font-size:14px;color:var(--muted)" id="matchStatus">Đã nối: 0/${_matchPairs.length}</div>`;
 }
@@ -4983,7 +4986,7 @@ function globalSearch(q){
     pMatches.forEach(p=>{
       sections.push(`<div class="gs-result-item" onclick="sp('phrase');const pi=document.getElementById('phraseInput');if(pi){pi.value='${p.phrase.replace(/'/g,"\\'")}';lookupPhrase();}closeGsResults()">
         <span style="font-size:16px">💬</span>
-        <div><div style="font-weight:600">${p.phrase}</div><div style="font-size:11.5px;color:var(--muted)">${(p.vi||'').slice(0,50)}</div></div>
+        <div><div style="font-weight:600">${esc(p.phrase)}</div><div style="font-size:11.5px;color:var(--muted)">${esc((p.vi||'').slice(0,50))}</div></div>
       </div>`);
     });
   }
@@ -5095,7 +5098,7 @@ function initDictation(){
       <input class="dict-input" id="dinput_${i}" placeholder="Gõ lại những gì bạn nghe..." onkeydown="if(event.key==='Enter')checkDictSentence(${i})">
       <button class="btn btn-g btn-sm" onclick="checkDictSentence(${i})" style="margin-bottom:8px">✅ Kiểm tra</button>
       <div class="dict-feedback" id="dfeedback_${i}"></div>
-      <div class="dict-answer" id="danswer_${i}">📝 Đáp án: <em>${d.text}</em></div>
+      <div class="dict-answer" id="danswer_${i}">📝 Đáp án: <em>${esc(d.text)}</em></div>
     </div>
   `).join('');
 }
