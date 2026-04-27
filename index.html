@@ -1568,10 +1568,10 @@ function renderVocabTable() {
       </td>
       <td>${posList.slice(0,2).map(posBadge).join('<br style="margin-bottom:4px">')}</td>
       <td>
-        <div class="vt-vi">${viText}</div>
-        <div class="vt-en">${enText}</div>
+        <div class="vt-vi">${esc(viText)}</div>
+        <div class="vt-en">${esc(enText)}</div>
       </td>
-      <td><div class="vt-ex">${example}</div></td>
+      <td><div class="vt-ex">${esc(example)}</div></td>
       <td style="text-align:center" onclick="event.stopPropagation()">
         <label class="vt-toggle">
           <input type="checkbox" ${v.learned?'checked':''} onchange="toggleLearned('${wordSafe}',this.checked)">
@@ -1649,7 +1649,7 @@ function renderWordPanelContent(entry) {
   if(entry.example) {
     html += `<div class="wd-section">
       <div class="wd-section-title">Ví dụ</div>
-      <div class="wd-ex-box">"${entry.example}"</div>
+      <div class="wd-ex-box">"${esc(entry.example)}"</div>
     </div>`;
   }
 
@@ -2784,7 +2784,7 @@ function renderLessonForm(l) {
 function fibRow(i, q={}) {
   return `<div id="fib_row_${i}" style="display:grid;grid-template-columns:2fr 1fr 1.5fr auto;gap:8px;margin-bottom:8px;align-items:center">
     <input class="if" id="fib_text_${i}" value="${(q.text||'').replace(/"/g,'&quot;')}" placeholder="Câu hỏi (dùng ___ cho chỗ trống)" style="font-size:13px;padding:8px 11px">
-    <input class="if" id="fib_ans_${i}" value="${q.answer||''}" placeholder="Đáp án" style="font-size:13px;padding:8px 11px">
+    <input class="if" id="fib_ans_${i}" value="${(q.answer||'').replace(/"/g,'&quot;')}" placeholder="Đáp án" style="font-size:13px;padding:8px 11px">
     <input class="if" id="fib_exp_${i}" value="${(q.explain||'').replace(/"/g,'&quot;')}" placeholder="Giải thích" style="font-size:13px;padding:8px 11px">
     <button class="btn btn-sm" type="button" style="background:rgba(255,107,138,.12);color:var(--err);border:1px solid rgba(255,107,138,.25);padding:7px 10px" onclick="this.closest('[id^=fib_row]').remove()">✕</button>
   </div>`;
@@ -4969,9 +4969,9 @@ function globalSearch(q){
     sections.push(`<div class="gs-result-cat">📖 Từ vựng</div>`);
     vMatches.forEach(v=>{
       const vi = v.viMeanings ? Object.values(v.viMeanings).flat().slice(0,1).join(', ') : '';
-      sections.push(`<div class="gs-result-item" onclick="sp('vocab');lookupWordDirect('${v.word}');closeGsResults()">
+      sections.push(`<div class="gs-result-item" data-word="${esc(v.word)}" onclick="sp('vocab');lookupWordDirect(this.dataset.word);closeGsResults()">
         <span style="font-size:16px">📖</span>
-        <div><div style="font-weight:600">${v.word}</div><div style="font-size:11.5px;color:var(--muted)">${vi.slice(0,50)}</div></div>
+        <div><div style="font-weight:600">${esc(v.word)}</div><div style="font-size:11.5px;color:var(--muted)">${esc(vi.slice(0,50))}</div></div>
       </div>`);
     });
   }
@@ -4984,7 +4984,7 @@ function globalSearch(q){
   if(pMatches.length){
     sections.push(`<div class="gs-result-cat">💬 Cụm từ</div>`);
     pMatches.forEach(p=>{
-      sections.push(`<div class="gs-result-item" onclick="sp('phrase');const pi=document.getElementById('phraseInput');if(pi){pi.value='${p.phrase.replace(/'/g,"\\'")}';lookupPhrase();}closeGsResults()">
+      sections.push(`<div class="gs-result-item" data-phrase="${esc(p.phrase)}" onclick="sp('phrase');const pi=document.getElementById('phraseInput');if(pi){pi.value=this.dataset.phrase;lookupPhrase();}closeGsResults()">
         <span style="font-size:16px">💬</span>
         <div><div style="font-weight:600">${esc(p.phrase)}</div><div style="font-size:11.5px;color:var(--muted)">${esc((p.vi||'').slice(0,50))}</div></div>
       </div>`);
