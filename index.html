@@ -699,7 +699,7 @@ audio{width:100%;accent-color:var(--accent)}
   <div class="vt-bar">
     <div class="vt-search" style="flex:1;min-width:180px;position:relative">
       <span class="vt-search-icon">🔎</span>
-      <input id="vtSearch" class="if" placeholder="Lọc danh sách..." oninput="renderVocabTable()" style="padding-left:36px">
+      <input id="vtSearch" class="if" placeholder="Lọc danh sách..." oninput="clearTimeout(_vtDebounce);_vtDebounce=setTimeout(renderVocabTable,150)" style="padding-left:36px">
     </div>
     <div class="vt-filter">
       <div class="vt-chip on" data-f="all" onclick="setVtFilter('all',this)">Tất cả</div>
@@ -1141,7 +1141,7 @@ audio{width:100%;accent-color:var(--accent)}
 
 <!-- SCORES -->
 <section id="page-scores" class="page">
-  <div class="ph"><div class="pt">Bảng <span>Điểm Số</span></div><div class="ps">Lịch sử, tiến độ theo thời gian và thống kê theo lớp</div></div>
+  <div class="ph"><div class="pt">Bảng <span>Điểm Số</span></div><div class="ps">Lịch sử, tiến độ theo thời gian và thống kê theo lớp <span id="scProfileLabel" style="margin-left:8px;font-size:12px;color:var(--muted)"></span></div></div>
 
   <!-- Stat cards -->
   <div class="stat-row">
@@ -1252,29 +1252,30 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 //  PROFILE SYSTEM
 // ═══════════════════════════════════════════
 let _profile = localStorage.getItem('eh_current_profile') || 'default';
-function lsk(k) { return _profile + '_' + k; }
+function lsk(k) { return _profile === 'default' ? k : _profile + '_' + k; }
+function _lsJSON2(k, fallback) { try { return JSON.parse(localStorage.getItem(lsk(k))||'null') ?? fallback; } catch { return fallback; } }
 
-let vocabList  = JSON.parse(localStorage.getItem(lsk('eh_vocab'))   ||'[]');
-let phraseList = JSON.parse(localStorage.getItem(lsk('eh_phrases')) ||'[]');
-let scores     = JSON.parse(localStorage.getItem(lsk('eh_scores'))  ||'[]');
-let rWords     = JSON.parse(localStorage.getItem(lsk('eh_rwords'))  ||'[]');
-let activity   = JSON.parse(localStorage.getItem(lsk('eh_act'))     ||'[]');
+let vocabList  = _lsJSON2('eh_vocab', []);
+let phraseList = _lsJSON2('eh_phrases', []);
+let scores     = _lsJSON2('eh_scores', []);
+let rWords     = _lsJSON2('eh_rwords', []);
+let activity   = _lsJSON2('eh_act', []);
 let quizData=[], quizDone=false, curLesson=null, listenDone=false, qMode='fib';
 let _curWord=null;
 
 function getProfileList() {
-  const list = JSON.parse(localStorage.getItem('eh_profiles') || '["default"]');
+  const list = _lsJSON('eh_profiles', ['default']);
   if(!list.includes('default')) list.unshift('default');
   return list;
 }
 function switchProfile(name) {
   _profile = name;
   localStorage.setItem('eh_current_profile', name);
-  vocabList  = JSON.parse(localStorage.getItem(lsk('eh_vocab'))   || '[]');
-  phraseList = JSON.parse(localStorage.getItem(lsk('eh_phrases')) || '[]');
-  scores     = JSON.parse(localStorage.getItem(lsk('eh_scores'))  || '[]');
-  rWords     = JSON.parse(localStorage.getItem(lsk('eh_rwords'))  || '[]');
-  activity   = JSON.parse(localStorage.getItem(lsk('eh_act'))     || '[]');
+  vocabList  = _lsJSON2('eh_vocab',   []);
+  phraseList = _lsJSON2('eh_phrases', []);
+  scores     = _lsJSON2('eh_scores',  []);
+  rWords     = _lsJSON2('eh_rwords',  []);
+  activity   = _lsJSON2('eh_act',     []);
   renderProfileBtn();
   renderHome(); renderVocabTable(); renderPhraseTable(); renderScores();
   showToast('👤 ' + name);
@@ -1437,7 +1438,7 @@ function calcStreak() {
 
 function renderHome() {
   // Stats row
-  const learnedCount = vocabList.filter(v=>{ const s=getSR(v.word); return s.reps>=3&&!isDue(v.word); }).length;
+  const learnedCount = vocabList.filter(v=>v.learned).length;
   const streak = calcStreak();
   const hsv = document.getElementById('hsTotalVocab');
   const hsl = document.getElementById('hsLearned');
@@ -1584,7 +1585,7 @@ function parseFreeDict(entries) {
 }
 
 // ── Vocab table ──
-let _vtFilterActive = 'all';
+let _vtFilterActive = 'all', _vtDebounce = null;
 
 function setVtFilter(f, el) {
   _vtFilterActive = f;
@@ -1706,9 +1707,11 @@ function openWordPanel(word) {
 
   // Audio
   const audioRow = document.getElementById('wdAudio');
-  audioRow.innerHTML = '';
-  if(entry.audioUrl) audioRow.innerHTML += `<button class="audio-btn" data-url="${esc(entry.audioUrl)}" onclick="playAudio(this.dataset.url)">🔊 Phát âm</button>`;
-  audioRow.innerHTML += `<button class="audio-btn tts" data-word="${esc(entry.word)}" onclick="ttsSpeak(this.dataset.word)">🗣️ TTS</button>`;
+  if(audioRow) {
+    audioRow.innerHTML = '';
+    if(entry.audioUrl) audioRow.innerHTML += `<button class="audio-btn" data-url="${esc(entry.audioUrl)}" onclick="playAudio(this.dataset.url)">🔊 Phát âm</button>`;
+    audioRow.innerHTML += `<button class="audio-btn tts" data-word="${esc(entry.word)}" onclick="ttsSpeak(this.dataset.word)">🗣️ TTS</button>`;
+  }
 
   renderWordPanelContent(entry);
 
@@ -2021,7 +2024,7 @@ async function lookupPhrase(){
   res.innerHTML=`
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div>
-        <div class="phrase-word">${raw}</div>
+        <div class="phrase-word">${esc(raw)}</div>
         <span class="tag ${tc}">${tn}</span>
         <button class="audio-btn tts" style="display:inline-flex;margin-left:8px" data-word="${esc(raw)}" onclick="ttsSpeak(this.dataset.word)">🗣️ Phát âm</button>
       </div>
@@ -2061,6 +2064,7 @@ function addPhraseManual(){
 function deletePhrase(i){phraseList.splice(i,1);localStorage.setItem(lsk('eh_phrases'),JSON.stringify(phraseList));renderPhraseTable();}
 function renderPhraseTable(){
   const tb=document.getElementById('pTBody');
+  if(!tb) return;
   if(!phraseList.length){tb.innerHTML='<tr><td colspan="6"><div class="empty" style="padding:24px"><div class="empty-i" style="font-size:28px">💬</div><div style="font-size:13px">Chưa có phrase nào</div></div></td></tr>';return;}
   tb.innerHTML=phraseList.map((p,i)=>`<tr>
     <td style="font-weight:600">${esc(p.phrase||'')}</td>
@@ -2342,10 +2346,11 @@ const LESSONS_DEFAULT = {
 };
 
 // LESSONS = default (trừ đã xóa) + imported
-const _deletedDefaults = JSON.parse(localStorage.getItem('eh_deleted_defaults')||'[]');
+function _lsJSON(key, fallback) { try { return JSON.parse(localStorage.getItem(key)||'null') ?? fallback; } catch { return fallback; } }
+const _deletedDefaults = _lsJSON('eh_deleted_defaults', []);
 let LESSONS = {};
 for(const [k,v] of Object.entries(LESSONS_DEFAULT)){ if(!_deletedDefaults.includes(k)) LESSONS[k]=v; }
-Object.assign(LESSONS, JSON.parse(localStorage.getItem('eh_imported_lessons')||'{}'));
+Object.assign(LESSONS, _lsJSON('eh_imported_lessons', {}));
 
 // ── Drive import helpers ──
 const JSON_TEMPLATE = {
@@ -2463,11 +2468,11 @@ function confirmDeleteLesson(key) {
   const isDefault = !!LESSONS_DEFAULT[key];
   if(isDefault) {
     // Lưu vào "deleted defaults" để ẩn đi
-    const del = JSON.parse(localStorage.getItem('eh_deleted_defaults')||'[]');
+    const del = _lsJSON('eh_deleted_defaults', []);
     if(!del.includes(key)) del.push(key);
     localStorage.setItem('eh_deleted_defaults', JSON.stringify(del));
   }
-  const imported = JSON.parse(localStorage.getItem('eh_imported_lessons')||'{}');
+  const imported = _lsJSON('eh_imported_lessons', {});
   delete imported[key]; delete LESSONS[key];
   localStorage.setItem('eh_imported_lessons', JSON.stringify(imported));
   renderAdminLessonList();
@@ -3189,7 +3194,7 @@ function saveAiLesson() {
     transcript:_aiGeneratedData?._transcript||'', questions, mcQuestions
   };
   LESSONS[key]=lesson;
-  const imported=JSON.parse(localStorage.getItem('eh_imported_lessons')||'{}');
+  const imported=_lsJSON('eh_imported_lessons', {});
   imported[key]=lesson;
   localStorage.setItem('eh_imported_lessons',JSON.stringify(imported));
   closeLessonModal();
@@ -3235,11 +3240,11 @@ function saveLessonForm() {
   };
 
   LESSONS[key] = lesson;
-  const imported = JSON.parse(localStorage.getItem('eh_imported_lessons')||'{}');
+  const imported = _lsJSON('eh_imported_lessons', {});
   // Save to imported (so it persists), remove from deleted if was deleted before
   imported[key] = lesson;
   localStorage.setItem('eh_imported_lessons', JSON.stringify(imported));
-  const del = JSON.parse(localStorage.getItem('eh_deleted_defaults')||'[]');
+  const del = _lsJSON('eh_deleted_defaults', []);
   const delIdx = del.indexOf(key);
   if(delIdx >= 0){ del.splice(delIdx,1); localStorage.setItem('eh_deleted_defaults',JSON.stringify(del)); }
 
@@ -3280,7 +3285,7 @@ async function importFromDrive() {
   }
   if(!jsonData){status.innerHTML='<span style="color:var(--err)">❌ Không tải được. File phải công khai và là JSON hợp lệ.</span>';return;}
   let count=0;
-  const imported=JSON.parse(localStorage.getItem('eh_imported_lessons')||'{}');
+  const imported=_lsJSON('eh_imported_lessons', {});
   for(const [key,val] of Object.entries(jsonData)){
     if(val.name&&(val.questions||val.mcQuestions)){imported[key]=val;LESSONS[key]=val;count++;}
   }
@@ -3926,7 +3931,7 @@ function saveUploadLesson() {
   };
 
   LESSONS[key]=lesson;
-  const imported=JSON.parse(localStorage.getItem('eh_imported_lessons')||'{}');
+  const imported=_lsJSON('eh_imported_lessons', {});
   imported[key]=lesson;
   localStorage.setItem('eh_imported_lessons',JSON.stringify(imported));
   closeLessonModal();
@@ -4263,8 +4268,8 @@ function previewLfYt(url) {
 //  FLASHCARD + SPACED REPETITION (SM-2 lite)
 // ═══════════════════════════════════════════
 function getSR(word) {
-  return JSON.parse(localStorage.getItem(lsk('sr_'+word))||'null') ||
-    {interval:0, ef:2.1, nextReview:0, reps:0, wrong:0};
+  try { return JSON.parse(localStorage.getItem(lsk('sr_'+word))||'null') || {interval:0,ef:2.1,nextReview:0,reps:0,wrong:0}; }
+  catch { return {interval:0,ef:2.1,nextReview:0,reps:0,wrong:0}; }
 }
 function setSR(word, data) { localStorage.setItem(lsk('sr_'+word), JSON.stringify(data)); }
 
@@ -4791,6 +4796,9 @@ function switchScoreTab(tab) {
 }
 
 function renderScores() {
+  // ── Profile label ──
+  const pLabel = document.getElementById('scProfileLabel');
+  if(pLabel) pLabel.textContent = '👤 ' + _profile;
   // ── Stats ──
   document.getElementById('stTotal').textContent = scores.length;
   document.getElementById('stWords').textContent = vocabList.length;
@@ -4814,27 +4822,27 @@ function renderScores() {
   // ── History table ──
   const filtered = getFilteredScores();
   const tb = document.getElementById('scBody');
+  const PAGE = 100;
   if(!filtered.length) {
     tb.innerHTML=`<tr><td colspan="8"><div class="empty" style="padding:28px"><div class="empty-i" style="font-size:28px">📊</div><div style="font-size:13px">Chưa có dữ liệu</div></div></td></tr>`;
   } else {
-    tb.innerHTML = filtered.map(s=>{
-      const pct=s.total?Math.round(s.score/s.total*100):0;
-      const bc=pct>=80?'sg':pct>=50?'sm':'sl';
-      return `<tr>
-        <td>${esc(s.student)}</td><td>${esc(s.class)}</td>
-        <td style="font-size:13px">${esc(s.lesson)}</td>
-        <td>${s.score}/${s.total}</td>
-        <td><span class="sbadge ${bc}">${pct}%</span></td>
-        <td style="color:var(--muted);font-size:12.5px">${esc(s.duration||'–')}</td>
-        <td style="color:var(--muted);font-size:12.5px">${esc(s.date)}</td>
-        <td style="color:var(--muted);font-size:12.5px">${esc(s.time)}</td>
-      </tr>`;
-    }).join('');
+    const page = filtered.slice(-PAGE).reverse();
+    const rowHTML = s => { const pct=s.total?Math.round(s.score/s.total*100):0; const bc=pct>=80?'sg':pct>=50?'sm':'sl';
+      return `<tr><td>${esc(s.student)}</td><td>${esc(s.class)}</td><td style="font-size:13px">${esc(s.lesson)}</td><td>${s.score}/${s.total}</td><td><span class="sbadge ${bc}">${pct}%</span></td><td style="color:var(--muted);font-size:12.5px">${esc(s.duration||'–')}</td><td style="color:var(--muted);font-size:12.5px">${esc(s.date)}</td><td style="color:var(--muted);font-size:12.5px">${esc(s.time)}</td></tr>`; };
+    tb.innerHTML = page.map(rowHTML).join('') +
+      (filtered.length > PAGE ? `<tr><td colspan="8" style="text-align:center;padding:12px"><button class="btn btn-g btn-sm" onclick="showAllScores()">Xem tất cả ${filtered.length} lần làm bài</button></td></tr>` : '');
   }
 
   // Draw charts if on chart tab
   if(_scoreTab==='chart') setTimeout(drawCharts,60);
   if(_scoreTab==='class') { populateClassSelects(); renderClassBoard(); }
+}
+function showAllScores() {
+  const filtered = getFilteredScores();
+  const tb = document.getElementById('scBody');
+  const rowHTML = s => { const pct=s.total?Math.round(s.score/s.total*100):0; const bc=pct>=80?'sg':pct>=50?'sm':'sl';
+    return `<tr><td>${esc(s.student)}</td><td>${esc(s.class)}</td><td style="font-size:13px">${esc(s.lesson)}</td><td>${s.score}/${s.total}</td><td><span class="sbadge ${bc}">${pct}%</span></td><td style="color:var(--muted);font-size:12.5px">${esc(s.duration||'–')}</td><td style="color:var(--muted);font-size:12.5px">${esc(s.date)}</td><td style="color:var(--muted);font-size:12.5px">${esc(s.time)}</td></tr>`; };
+  tb.innerHTML = [...filtered].reverse().map(rowHTML).join('');
 }
 
 // ── Class selects ──
