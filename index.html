@@ -2319,7 +2319,7 @@ function renderAdminLessonList() {
     <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;background:var(--s2)">
       <span style="font-size:22px">${l.icon||'🎧'}</span>
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:14px">${l.name}</div>
+        <div style="font-weight:700;font-size:14px">${esc(l.name)}</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px">${levelBadge(l.level)} · ${(l.questions||[]).length} câu điền · ${(l.mcQuestions||[]).length} câu trắc nghiệm · ${l.youtube?'YouTube':l.audio?'MP3':'Chưa có media'}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
@@ -3823,13 +3823,13 @@ function renderLessonTable(){
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-size:22px">${l.icon||'🎧'}</span>
           <div>
-            <div style="font-weight:700;font-size:14px">${l.name}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">${l.desc||''}</div>
+            <div style="font-weight:700;font-size:14px">${esc(l.name)}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(l.desc||'')}</div>
           </div>
         </div>
       </td>
       <td style="padding:14px 16px;border-bottom:1px solid var(--border)">
-        <span style="padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:700;background:${levelColor[l.level]||'rgba(255,255,255,.08)'}">${l.level||'–'}</span>
+        <span style="padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:700;background:${levelColor[l.level]||'rgba(255,255,255,.08)'}">${esc(l.level||'–')}</span>
       </td>
       <td style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;color:var(--muted)">
         ${(l.questions||[]).length} điền<br>${(l.mcQuestions||[]).length} trắc nghiệm
@@ -3921,7 +3921,7 @@ function renderListenQs(){
   if(qMode==='fib'){
     const qs=curLesson.questions||[];
     qa.innerHTML=qs.length?qs.map((q,i)=>`<div class="fib-q" id="fq${i}">
-      <div class="fib-text">${i+1}. ${q.text}</div>
+      <div class="fib-text">${i+1}. ${esc(q.text)}</div>
       <input id="fa${i}" class="fib-inp" placeholder="Điền đáp án...">
       <div class="fib-fb" id="ff${i}"></div>
     </div>`).join(''):'<div class="empty" style="padding:28px"><div class="empty-i" style="font-size:28px">📝</div><div style="font-size:13px">Bài này chưa có câu điền</div></div>';
@@ -3929,8 +3929,8 @@ function renderListenQs(){
     const qs=curLesson.mcQuestions||[];
     const L=['A','B','C','D'];
     qa.innerHTML=qs.length?qs.map((q,i)=>`<div class="mc-q" id="mcq${i}">
-      <div class="mc-qtext">${i+1}. ${q.text}</div>
-      <div class="mc-opts">${q.options.map((opt,j)=>`<div class="mc-opt" id="mco${i}_${j}" onclick="selMC(${i},${j})"><div class="mc-letter">${L[j]}</div>${opt}</div>`).join('')}</div>
+      <div class="mc-qtext">${i+1}. ${esc(q.text)}</div>
+      <div class="mc-opts">${q.options.map((opt,j)=>`<div class="mc-opt" id="mco${i}_${j}" onclick="selMC(${i},${j})"><div class="mc-letter">${L[j]}</div>${esc(opt)}</div>`).join('')}</div>
     </div>`).join(''):'<div class="empty" style="padding:28px"><div class="empty-i" style="font-size:28px">🔘</div><div style="font-size:13px">Bài này chưa có câu trắc nghiệm</div></div>';
   }
 }
@@ -3950,7 +3950,7 @@ async function submitListen(){
       const user=inp.value.trim().toLowerCase(),correct=q.answer.toLowerCase();
       inp.disabled=true;
       if(user===correct){score++;item.classList.add('fq-ok');fb.innerHTML=`<span style="color:var(--ok)">✅ Đúng!</span>`;}
-      else{item.classList.add('fq-err');fb.innerHTML=`<span style="color:var(--err)">✖ Đáp án: <strong>${q.answer}</strong></span>${q.explain?` – <span style="color:var(--muted)">${q.explain}</span>`:''}`;}
+      else{item.classList.add('fq-err');fb.innerHTML=`<span style="color:var(--err)">✖ Đáp án: <strong>${esc(q.answer)}</strong></span>${q.explain?` – <span style="color:var(--muted)">${esc(q.explain)}</span>`:''}`;}
     });
   } else {
     const qs=curLesson.mcQuestions||[]; total=qs.length;
@@ -4668,7 +4668,7 @@ function renderScores() {
   if(ls) {
     const lessons = [...new Set(scores.map(s=>s.lesson))];
     ls.innerHTML = '<option value="">Tất cả bài</option>' +
-      lessons.map(l=>`<option value="${l}">${l}</option>`).join('');
+      lessons.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');
   }
 
   // ── History table ──
@@ -4681,13 +4681,13 @@ function renderScores() {
       const pct=Math.round(s.score/s.total*100);
       const bc=pct>=80?'sg':pct>=50?'sm':'sl';
       return `<tr>
-        <td>${s.student}</td><td>${s.class}</td>
-        <td style="font-size:13px">${s.lesson}</td>
+        <td>${esc(s.student)}</td><td>${esc(s.class)}</td>
+        <td style="font-size:13px">${esc(s.lesson)}</td>
         <td>${s.score}/${s.total}</td>
         <td><span class="sbadge ${bc}">${pct}%</span></td>
-        <td style="color:var(--muted);font-size:12.5px">${s.duration||'–'}</td>
-        <td style="color:var(--muted);font-size:12.5px">${s.date}</td>
-        <td style="color:var(--muted);font-size:12.5px">${s.time}</td>
+        <td style="color:var(--muted);font-size:12.5px">${esc(s.duration||'–')}</td>
+        <td style="color:var(--muted);font-size:12.5px">${esc(s.date)}</td>
+        <td style="color:var(--muted);font-size:12.5px">${esc(s.time)}</td>
       </tr>`;
     }).join('');
   }
@@ -4755,7 +4755,7 @@ function renderClassBoard() {
     <div class="lb-row">
       <div class="lb-rank ${i<3?'r'+(i+1):''}">${i<3?rankIcons[i]:i+1}</div>
       <div style="flex:1">
-        <div class="lb-name">${s.name}</div>
+        <div class="lb-name">${esc(s.name)}</div>
         <div class="lb-meta">${s.count} lượt · TB: ${Math.round(s.avg*100)}%</div>
       </div>
       <div class="lb-bar-wrap"><div class="lb-bar" style="width:${Math.round(s.best/maxBest*100)}%"></div></div>
