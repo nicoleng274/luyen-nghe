@@ -1679,8 +1679,8 @@ function renderWordPanelContent(entry) {
       <div id="wdColloc" class="colloc-row"><span style="color:var(--muted);font-size:13px">Đang tải...</span></div>
     </div>
     <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-g btn-sm" onclick="toggleLearnedFromPanel('${entry.word}')" id="wdLearnBtn">${entry.learned?'📚 Đánh dấu chưa học':'✅ Đánh dấu đã học'}</button>
-      <button class="btn btn-g btn-sm" style="color:var(--err)" onclick="deleteVocab('${entry.word}')">🗑 Xóa</button>
+      <button class="btn btn-g btn-sm" data-word="${esc(entry.word)}" onclick="toggleLearnedFromPanel(this.dataset.word)" id="wdLearnBtn">${entry.learned?'📚 Đánh dấu chưa học':'✅ Đánh dấu đã học'}</button>
+      <button class="btn btn-g btn-sm" style="color:var(--err)" data-word="${esc(entry.word)}" onclick="deleteVocab(this.dataset.word)">🗑 Xóa</button>
     </div>`;
 
   document.getElementById('wdContent').innerHTML = html;
@@ -1934,7 +1934,7 @@ async function lookupPhrase(){
       <div>
         <div class="phrase-word">${raw}</div>
         <span class="tag ${tc}">${tn}</span>
-        <button class="audio-btn tts" style="display:inline-flex;margin-left:8px" onclick="ttsSpeak('${raw.replace(/'/g,"\\'")}')">🗣️ Phát âm</button>
+        <button class="audio-btn tts" style="display:inline-flex;margin-left:8px" data-word="${esc(raw)}" onclick="ttsSpeak(this.dataset.word)">🗣️ Phát âm</button>
       </div>
       <button class="btn btn-g btn-sm" onclick='savePhrase(${JSON.stringify(so).replace(/'/g,"&#39;")})'>💾 Lưu phrase</button>
     </div>
@@ -2135,7 +2135,7 @@ function renderListenQuiz() {
   document.getElementById('qList').innerHTML=quizData.map((item,i)=>`
     <div class="lq-item" id="qi${i}">
       <div class="qi-num">Q${i+1}</div>
-      <div class="lq-play" onclick="lqPlay(${i},'${item.word}','${(item.audioUrl||'').replace(/'/g,"\\'")}')">🔊</div>
+      <div class="lq-play" data-idx="${i}" data-word="${esc(item.word)}" data-url="${esc(item.audioUrl||'')}" onclick="lqPlay(+this.dataset.idx,this.dataset.word,this.dataset.url)">🔊</div>
       <div style="flex:1;min-width:140px">
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Nghe và gõ từ bạn nghe được</div>
         <input id="qa${i}" class="qi-inp" style="width:100%;max-width:220px" placeholder="Gõ từ..." oninput="updateQP()">
@@ -2363,8 +2363,8 @@ function renderAdminLessonList() {
         <div style="font-size:12px;color:var(--muted);margin-top:2px">${levelBadge(l.level)} · ${(l.questions||[]).length} câu điền · ${(l.mcQuestions||[]).length} câu trắc nghiệm · ${l.youtube?'YouTube':l.audio?'MP3':'Chưa có media'}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn btn-g btn-sm" onclick="editLesson('${key}')">✏️ Sửa</button>
-        <button class="btn btn-sm" style="background:rgba(255,107,138,.15);color:var(--err);border:1px solid rgba(255,107,138,.3)" onclick="confirmDeleteLesson('${key}')">🗑</button>
+        <button class="btn btn-g btn-sm" data-key="${esc(key)}" onclick="editLesson(this.dataset.key)">✏️ Sửa</button>
+        <button class="btn btn-sm" style="background:rgba(255,107,138,.15);color:var(--err);border:1px solid rgba(255,107,138,.3)" data-key="${esc(key)}" onclick="confirmDeleteLesson(this.dataset.key)">🗑</button>
       </div>
     </div>`).join('') || '<div style="color:var(--muted);font-size:13px;padding:12px">Chưa có bài nào</div>';
 }
@@ -3879,8 +3879,8 @@ function renderLessonTable(){
       </td>
       <td style="padding:14px 16px;border-bottom:1px solid var(--border);text-align:center">
         <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" onclick="selectLesson('${key}')">▶ Học</button>
-          <button class="btn btn-g btn-sm" onclick="event.stopPropagation();showLessonQR('${key}','${l.name.replace(/'/g,"\\'")}')">📱 QR</button>
+          <button class="btn btn-p btn-sm" data-key="${esc(key)}" onclick="selectLesson(this.dataset.key)">▶ Học</button>
+          <button class="btn btn-g btn-sm" data-key="${esc(key)}" data-name="${esc(l.name)}" onclick="event.stopPropagation();showLessonQR(this.dataset.key,this.dataset.name)">📱 QR</button>
         </div>
       </td>
     </tr>`).join('');
@@ -5059,9 +5059,9 @@ function globalSearch(q){
   if(lMatches.length){
     sections.push(`<div class="gs-result-cat">🎧 Bài nghe</div>`);
     lMatches.forEach(([key,l])=>{
-      sections.push(`<div class="gs-result-item" onclick="sp('listen');selectLesson('${key}');closeGsResults()">
+      sections.push(`<div class="gs-result-item" data-key="${esc(key)}" onclick="sp('listen');selectLesson(this.dataset.key);closeGsResults()">
         <span style="font-size:16px">${l.icon||'🎧'}</span>
-        <div><div style="font-weight:600">${l.name}</div><div style="font-size:11.5px;color:var(--muted)">${(l.desc||'').slice(0,50)}</div></div>
+        <div><div style="font-weight:600">${esc(l.name)}</div><div style="font-size:11.5px;color:var(--muted)">${esc((l.desc||'').slice(0,50))}</div></div>
       </div>`);
     });
   }
