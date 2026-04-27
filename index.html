@@ -6,6 +6,7 @@
 <title>EnglishHub – Luyện Tiếng Anh</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --bg:#0c0c14;--surface:#13131e;--s2:#1c1c2e;--s3:#242438;
@@ -481,13 +482,114 @@ audio{width:100%;accent-color:var(--accent)}
 .ap-loop-btn{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
 .ap-loop-btn.active{background:rgba(61,219,165,.15);border-color:var(--ok);color:var(--ok)}
 
+/* ══ LIGHT THEME ══ */
+[data-theme="light"]{
+  --bg:#f0f2f7;--surface:#ffffff;--s2:#f5f6fa;--s3:#ebedf5;
+  --border:#d0d4e8;--accent:#5a4fd8;--a2:#e84060;--a3:#22b588;--a4:#e8a800;
+  --text:#1a1a2e;--muted:#6b6b8a;--card:#ffffff;
+  --ok:#22b588;--err:#e84060;--warn:#e8a800;
+}
+[data-theme="light"] body{background:var(--bg)}
+[data-theme="light"] .sidebar{box-shadow:2px 0 12px rgba(0,0,0,.06)}
+[data-theme="light"] .vt-table-wrap{border:1px solid var(--border);border-radius:var(--r)}
+[data-theme="light"] .stbl th{background:var(--s2)}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:#c0c4d8}
+
+/* ══ GLOBAL SEARCH ══ */
+.gs-wrap{padding:10px 12px;border-bottom:1px solid var(--border);position:relative}
+.gs-input{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:13px;padding:8px 34px 8px 32px;outline:none;transition:border-color .2s;width:100%}
+.gs-input:focus{border-color:var(--accent)}
+.gs-icon{position:absolute;left:22px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.45;pointer-events:none}
+.gs-clear{position:absolute;right:22px;top:50%;transform:translateY(-50%);font-size:14px;cursor:pointer;opacity:.4;transition:opacity .2s;background:none;border:none;color:var(--text)}
+.gs-clear:hover{opacity:.9}
+.gs-results{position:absolute;left:12px;right:12px;top:calc(100% - 2px);background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--rs) var(--rs);max-height:320px;overflow-y:auto;z-index:500;box-shadow:0 12px 28px rgba(0,0,0,.25);display:none}
+.gs-results.open{display:block}
+.gs-result-item{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px;transition:background .15s;border-bottom:1px solid var(--border)}
+.gs-result-item:last-child{border-bottom:none}
+.gs-result-item:hover{background:var(--s2)}
+.gs-result-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:6px 14px 4px;color:var(--muted);background:var(--s3);border-bottom:1px solid var(--border)}
+.gs-no-results{padding:24px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ══ THEME TOGGLE ══ */
+.theme-btn{background:none;border:1px solid var(--border);border-radius:var(--rs);color:var(--muted);font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:600;padding:5px 11px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:5px}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ══ DICTATION MODE ══ */
+.dict-sent{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:12px}
+.dict-sent.dict-correct{border-color:var(--ok);background:rgba(61,219,165,.06)}
+.dict-sent.dict-wrong{border-color:var(--err);background:rgba(255,107,138,.06)}
+.dict-num{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px}
+.dict-play{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:20px;background:rgba(124,111,255,.12);border:1px solid rgba(124,111,255,.3);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-bottom:12px}
+.dict-play:hover{background:rgba(124,111,255,.22)}
+.dict-input{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:14px;padding:10px 14px;outline:none;transition:border-color .2s;width:100%;margin-bottom:8px}
+.dict-input:focus{border-color:var(--accent)}
+.dict-feedback{font-size:13px;line-height:1.7;margin-top:6px}
+.dict-word-ok{color:var(--ok);font-weight:600}
+.dict-word-err{color:var(--err);text-decoration:line-through;font-weight:600}
+.dict-word-missing{color:var(--warn);font-weight:600}
+.dict-answer{font-size:13px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:none}
+.dict-answer.show{display:block}
+
+/* ══ QR MODAL ══ */
+.qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;display:none;align-items:center;justify-content:center}
+.qr-overlay.open{display:flex}
+.qr-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;text-align:center;width:min(340px,90vw);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.qr-title{font-size:16px;font-weight:800;margin-bottom:4px}
+.qr-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+#qrCanvas{margin:0 auto 16px;background:#fff;padding:10px;border-radius:8px;display:inline-block}
+.qr-url{font-size:11px;color:var(--muted);word-break:break-all;margin-bottom:16px}
+
+/* ══ MOBILE ══ */
+.bottom-nav{display:none}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s;z-index:300}
+  .sidebar.mob-open{transform:translateX(0)}
+  .main{margin-left:0;padding:16px 14px 80px}
+  .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:299}
+  .mob-overlay.show{display:block}
+  .mob-menu-btn{display:flex;position:fixed;top:12px;left:12px;z-index:400;width:40px;height:40px;border-radius:var(--rs);background:var(--surface);border:1px solid var(--border);align-items:center;justify-content:center;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+  .ph{padding-top:48px}
+  .home-grid{grid-template-columns:1fr 1fr}
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200;padding:6px 0 calc(6px + env(safe-area-inset-bottom))}
+  .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:.2s;border:none;background:none;font-family:'Be Vietnam Pro',sans-serif}
+  .bn-item.active{color:var(--accent)}
+  .bn-icon{font-size:20px}
+  .mc-quiz-opts{grid-template-columns:1fr}
+  [data-theme="light"] .mob-menu-btn{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+}
+@media(min-width:769px){
+  .mob-menu-btn{display:none}
+  .mob-overlay{display:none!important}
+}
+
+/* ══ PRINT STYLES ══ */
+@media print{
+  .sidebar,.bottom-nav,.mob-menu-btn,.btn,.listen-hero{display:none!important}
+  .main{margin:0;padding:12px}
+  .page{display:block!important}
+  .page:not(.print-target){display:none!important}
+  body{background:#fff;color:#000}
+  .mc-opt,.lq-item{break-inside:avoid}
+}
+</style>
 </head>
 <body>
 
-<aside class="sidebar">
+<!-- Mobile menu button -->
+<button class="mob-menu-btn" onclick="toggleMobileMenu()" id="mobMenuBtn">☰</button>
+<div class="mob-overlay" id="mobOverlay" onclick="closeMobileMenu()"></div>
+
+<aside class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-name">EnglishHub</div>
     <div class="logo-sub">Luyện Tiếng Anh Pro</div>
+  </div>
+  <!-- Global Search -->
+  <div class="gs-wrap">
+    <span class="gs-icon">🔍</span>
+    <input class="gs-input" id="gsInput" placeholder="Tìm kiếm toàn app..." oninput="globalSearch(this.value)" onfocus="globalSearch(this.value)" onblur="setTimeout(()=>closeGsResults(),200)">
+    <button class="gs-clear" onclick="clearGsInput()" id="gsClearBtn" style="display:none">✕</button>
+    <div class="gs-results" id="gsResults"></div>
   </div>
   <nav class="nav">
     <div class="ni active" onclick="sp('home')"><span class="ni-icon">🏠</span>Tổng quan</div>
@@ -498,8 +600,21 @@ audio{width:100%;accent-color:var(--accent)}
     <div class="ni" onclick="sp('listen')"><span class="ni-icon">🎧</span>Luyện nghe</div>
     <div class="ni" onclick="sp('scores')"><span class="ni-icon">📊</span>Điểm số</div>
   </nav>
-  <div class="sf">EnglishHub v2.2 · Multi-source</div>
+  <div class="sf" style="display:flex;align-items:center;justify-content:space-between">
+    <span>EnglishHub v2.3</span>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Tối</button>
+  </div>
 </aside>
+
+<!-- Bottom nav (mobile only) -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-item active" onclick="sp('home');setActiveBn(this)"><span class="bn-icon">🏠</span>Tổng quan</button>
+  <button class="bn-item" onclick="sp('vocab');setActiveBn(this)"><span class="bn-icon">📖</span>Từ vựng</button>
+  <button class="bn-item" onclick="sp('flashcard');setActiveBn(this)"><span class="bn-icon">🃏</span>Flashcard</button>
+  <button class="bn-item" onclick="sp('quiz');setActiveBn(this)"><span class="bn-icon">🧠</span>Kiểm tra</button>
+  <button class="bn-item" onclick="sp('listen');setActiveBn(this)"><span class="bn-icon">🎧</span>Nghe</button>
+  <button class="bn-item" onclick="sp('scores');setActiveBn(this)"><span class="bn-icon">📊</span>Điểm số</button>
+</nav>
 
 <main class="main">
 
@@ -839,11 +954,15 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div class="qmode-tabs">
-        <div class="qmt active" id="qmtFib"    onclick="setQMode('fib')">✏️ Điền chỗ trống</div>
-        <div class="qmt"        id="qmtMc"     onclick="setQMode('mc')">🔘 Trắc nghiệm</div>
-        <div class="qmt"        id="qmtShadow" onclick="setQMode('shadow')">🔄 Shadow</div>
+        <div class="qmt active" id="qmtFib"      onclick="setQMode('fib')">✏️ Điền trống</div>
+        <div class="qmt"        id="qmtMc"       onclick="setQMode('mc')">🔘 Trắc nghiệm</div>
+        <div class="qmt"        id="qmtShadow"   onclick="setQMode('shadow')">🔄 Shadow</div>
+        <div class="qmt"        id="qmtDictation" onclick="setQMode('dictation')">🎙️ Dictation</div>
       </div>
-      <button class="btn btn-p" id="lSubmitBtn" onclick="submitListen()">📤 Nộp bài</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g btn-sm" id="lPrintBtn" onclick="printLesson()" title="In đề ra PDF">🖨️ In đề</button>
+        <button class="btn btn-p" id="lSubmitBtn" onclick="submitListen()">📤 Nộp bài</button>
+      </div>
     </div>
     <div id="lQs"></div>
 
@@ -882,6 +1001,28 @@ audio{width:100%;accent-color:var(--accent)}
           <audio id="srPlayback" controls style="display:none;flex:1;min-width:200px;accent-color:var(--accent)"></audio>
           <span id="srRecStatus" style="font-size:13px;color:var(--muted)">Nhấn để ghi âm giọng đọc của bạn</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Dictation Panel -->
+    <div id="dictationPanel" style="display:none">
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="font-size:14px;font-weight:700">🎙️ Dictation — Nghe và gõ lại</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;color:var(--muted)">Tốc độ:</span>
+            <button class="ap-speed-btn" onclick="dictSetSpeed(.75,this)">0.75×</button>
+            <button class="ap-speed-btn active" onclick="dictSetSpeed(1,this)">1×</button>
+            <button class="ap-speed-btn" onclick="dictSetSpeed(1.25,this)">1.25×</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:var(--muted)">Nghe từng câu → gõ lại → Enter để kiểm tra. Nhấn 🔊 để nghe lại.</div>
+      </div>
+      <div id="dictSentences"></div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-s" onclick="checkAllDictation()">✅ Kiểm tra tất cả</button>
+        <button class="btn btn-g" onclick="resetDictation()">🔄 Làm lại</button>
+        <div id="dictScore" style="display:flex;align-items:center;font-size:14px;font-weight:700;color:var(--ok);gap:6px"></div>
       </div>
     </div>
 
@@ -931,6 +1072,20 @@ audio{width:100%;accent-color:var(--accent)}
       <div onclick="closeLessonModal()" style="cursor:pointer;width:28px;height:28px;border-radius:50%;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px">✕</div>
     </div>
     <div style="padding:18px 20px" id="lessonModalBody"></div>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qrOverlay" onclick="closeQrModal()">
+  <div class="qr-box" onclick="event.stopPropagation()">
+    <div class="qr-title" id="qrTitle">Mã QR bài nghe</div>
+    <div class="qr-sub" id="qrSub">Học sinh quét để vào bài ngay</div>
+    <div id="qrCanvas"></div>
+    <div class="qr-url" id="qrUrl"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn btn-s btn-sm" onclick="downloadQR()">⬇ Tải ảnh</button>
+      <button class="btn btn-g btn-sm" onclick="closeQrModal()">✕ Đóng</button>
+    </div>
   </div>
 </div>
 
@@ -3587,7 +3742,10 @@ function renderLessonTable(){
         ${l.youtube?'<span style="color:var(--err)">▶ YouTube</span>':l.audio?'<span style="color:var(--a3)">🎵 MP3</span>':'<span style="color:var(--muted)">–</span>'}
       </td>
       <td style="padding:14px 16px;border-bottom:1px solid var(--border);text-align:center">
-        <button class="btn btn-p btn-sm" onclick="selectLesson('${key}')">▶ Học</button>
+        <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-p btn-sm" onclick="selectLesson('${key}')">▶ Học</button>
+          <button class="btn btn-g btn-sm" onclick="event.stopPropagation();showLessonQR('${key}','${l.name.replace(/'/g,"\\'")}')">📱 QR</button>
+        </div>
       </td>
     </tr>`).join('');
 }
@@ -3627,17 +3785,39 @@ function selectLesson(key){
 }
 function setQMode(mode){
   qMode=mode; listenDone=false;
-  document.getElementById('qmtFib').classList.toggle('active',mode==='fib');
-  document.getElementById('qmtMc').classList.toggle('active',mode==='mc');
-  document.getElementById('qmtShadow').classList.toggle('active',mode==='shadow');
-  document.getElementById('lQs').style.display      = mode==='shadow'?'none':'block';
-  document.getElementById('shadowPanel').style.display = mode==='shadow'?'block':'none';
-  document.getElementById('lSubmitBtn').style.display  = mode==='shadow'?'none':'block';
-  document.getElementById('lResult').classList.remove('show');
-  document.getElementById('lSubmitBtn').textContent='📤 Nộp bài';
-  document.getElementById('lSubmitBtn').disabled=false;
-  if(mode!=='shadow') renderListenQs();
-  else initShadowReading();
+  ['qmtFib','qmtMc','qmtShadow','qmtDictation'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.classList.remove('active');
+  });
+  const tabMap={fib:'qmtFib',mc:'qmtMc',shadow:'qmtShadow',dictation:'qmtDictation'};
+  const tab=document.getElementById(tabMap[mode]); if(tab) tab.classList.add('active');
+
+  const lQs=document.getElementById('lQs');
+  const shadowP=document.getElementById('shadowPanel');
+  const dictP=document.getElementById('dictationPanel');
+  const submitBtn=document.getElementById('lSubmitBtn');
+  const lResult=document.getElementById('lResult');
+
+  if(lResult) lResult.classList.remove('show');
+  if(submitBtn){ submitBtn.textContent='📤 Nộp bài'; submitBtn.disabled=false; }
+
+  if(mode==='dictation'){
+    if(lQs) lQs.style.display='none';
+    if(shadowP) shadowP.style.display='none';
+    if(dictP) dictP.style.display='block';
+    if(submitBtn) submitBtn.style.display='none';
+    initDictation(); return;
+  }
+  if(dictP) dictP.style.display='none';
+  if(submitBtn) submitBtn.style.display='block';
+
+  if(mode==='shadow'){
+    if(lQs) lQs.style.display='none';
+    if(shadowP) shadowP.style.display='block';
+    initShadowReading(); return;
+  }
+  if(shadowP) shadowP.style.display='none';
+  if(lQs) lQs.style.display='block';
+  renderListenQs();
 }
 function renderListenQs(){
   const qa=document.getElementById('lQs'); if(!curLesson){qa.innerHTML='';return;}
@@ -4605,6 +4785,303 @@ renderPhraseTable();
 renderHome();
 renderVocabTable();
 renderLessonTable();
+
+// ═══════════════════════════════════════════
+//  THEME TOGGLE (Dark / Light)
+// ═══════════════════════════════════════════
+(function initTheme(){
+  const saved = localStorage.getItem('eh_theme')||'dark';
+  applyTheme(saved);
+})();
+
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  const btn = document.getElementById('themeBtn');
+  if(btn) btn.textContent = t==='dark' ? '🌙 Tối' : '☀️ Sáng';
+  localStorage.setItem('eh_theme', t);
+}
+
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme')||'dark';
+  applyTheme(cur==='dark'?'light':'dark');
+}
+
+// ═══════════════════════════════════════════
+//  GLOBAL SEARCH
+// ═══════════════════════════════════════════
+function globalSearch(q){
+  const inp = document.getElementById('gsInput');
+  const clearBtn = document.getElementById('gsClearBtn');
+  const res = document.getElementById('gsResults');
+  if(clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+  if(!q||q.trim().length<1){ res.classList.remove('open'); return; }
+  const kw = q.trim().toLowerCase();
+  const sections = [];
+
+  // Search vocab
+  const vMatches = vocabList.filter(v=>
+    v.word.toLowerCase().includes(kw) ||
+    (v.viMeanings && JSON.stringify(v.viMeanings).toLowerCase().includes(kw))
+  ).slice(0,4);
+  if(vMatches.length){
+    sections.push(`<div class="gs-result-cat">📖 Từ vựng</div>`);
+    vMatches.forEach(v=>{
+      const vi = v.viMeanings ? Object.values(v.viMeanings).flat().slice(0,1).join(', ') : '';
+      sections.push(`<div class="gs-result-item" onclick="sp('vocab');lookupWordDirect('${v.word}');closeGsResults()">
+        <span style="font-size:16px">📖</span>
+        <div><div style="font-weight:600">${v.word}</div><div style="font-size:11.5px;color:var(--muted)">${vi.slice(0,50)}</div></div>
+      </div>`);
+    });
+  }
+
+  // Search phrases
+  const pMatches = phraseList.filter(p=>
+    (p.phrase||'').toLowerCase().includes(kw)||
+    (p.vi||'').toLowerCase().includes(kw)
+  ).slice(0,3);
+  if(pMatches.length){
+    sections.push(`<div class="gs-result-cat">💬 Cụm từ</div>`);
+    pMatches.forEach(p=>{
+      sections.push(`<div class="gs-result-item" onclick="sp('phrase');closeGsResults()">
+        <span style="font-size:16px">💬</span>
+        <div><div style="font-weight:600">${p.phrase}</div><div style="font-size:11.5px;color:var(--muted)">${(p.vi||'').slice(0,50)}</div></div>
+      </div>`);
+    });
+  }
+
+  // Search lessons
+  const lessons = JSON.parse(localStorage.getItem('eh_lessons')||'[]');
+  const lMatches = lessons.filter(l=>
+    (l.title||'').toLowerCase().includes(kw)||
+    (l.topic||'').toLowerCase().includes(kw)
+  ).slice(0,3);
+  if(lMatches.length){
+    sections.push(`<div class="gs-result-cat">🎧 Bài nghe</div>`);
+    lMatches.forEach(l=>{
+      sections.push(`<div class="gs-result-item" onclick="sp('listen');closeGsResults()">
+        <span style="font-size:16px">🎧</span>
+        <div><div style="font-weight:600">${l.title}</div><div style="font-size:11.5px;color:var(--muted)">${(l.topic||'').slice(0,50)}</div></div>
+      </div>`);
+    });
+  }
+
+  if(!sections.length){
+    res.innerHTML=`<div class="gs-no-results">Không tìm thấy kết quả cho "<strong>${q}</strong>"</div>`;
+  } else {
+    res.innerHTML=sections.join('');
+  }
+  res.classList.add('open');
+}
+
+function closeGsResults(){
+  const res = document.getElementById('gsResults');
+  if(res) res.classList.remove('open');
+}
+
+function clearGsInput(){
+  const inp = document.getElementById('gsInput');
+  if(inp){ inp.value=''; inp.focus(); }
+  const btn = document.getElementById('gsClearBtn');
+  if(btn) btn.style.display='none';
+  closeGsResults();
+}
+
+// ═══════════════════════════════════════════
+//  MOBILE MENU
+// ═══════════════════════════════════════════
+function toggleMobileMenu(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('mobOverlay');
+  sb.classList.toggle('mob-open');
+  ov.classList.toggle('show');
+}
+function closeMobileMenu(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('mobOverlay');
+  sb.classList.remove('mob-open');
+  ov.classList.remove('show');
+}
+function setActiveBn(el){
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  closeMobileMenu();
+}
+
+// ═══════════════════════════════════════════
+//  DICTATION MODE
+// ═══════════════════════════════════════════
+let _dictSpeed = 1;
+let _dictData  = [];
+
+function initDictation(){
+  if(!curLesson) return;
+  _dictData = [];
+  const panel = document.getElementById('dictationPanel');
+  const cont  = document.getElementById('dictSentences');
+  const scoreEl = document.getElementById('dictScore');
+  if(scoreEl) scoreEl.innerHTML='';
+
+  // Collect sentences from lesson transcript or questions
+  let sentences = [];
+  if(curLesson.transcript){
+    sentences = curLesson.transcript.split(/[.!?]+/).map(s=>s.trim()).filter(s=>s.length>8).slice(0,10);
+  } else if(curLesson.questions){
+    sentences = curLesson.questions.filter(q=>q.type==='fib'||q.type==='mc').slice(0,8).map(q=>q.sentence||q.question||'');
+  }
+
+  if(!sentences.length){
+    if(cont) cont.innerHTML='<div class="empty" style="padding:32px"><div class="empty-i">🎙️</div><div>Bài này chưa có transcript để luyện dictation</div></div>';
+    return;
+  }
+
+  _dictData = sentences.map((s,i)=>({id:i,text:s,userAnswer:'',checked:false}));
+  if(cont) cont.innerHTML = _dictData.map((d,i)=>`
+    <div class="dict-sent" id="dsent_${i}">
+      <div class="dict-num">Câu ${i+1}/${_dictData.length}</div>
+      <button class="dict-play" onclick="dictPlaySentence(${i})">🔊 Nghe câu ${i+1}</button>
+      <input class="dict-input" id="dinput_${i}" placeholder="Gõ lại những gì bạn nghe..." onkeydown="if(event.key==='Enter')checkDictSentence(${i})">
+      <button class="btn btn-g btn-sm" onclick="checkDictSentence(${i})" style="margin-bottom:8px">✅ Kiểm tra</button>
+      <div class="dict-feedback" id="dfeedback_${i}"></div>
+      <div class="dict-answer" id="danswer_${i}">📝 Đáp án: <em>${d.text}</em></div>
+    </div>
+  `).join('');
+}
+
+function dictSetSpeed(s, btn){
+  _dictSpeed = s;
+  document.querySelectorAll('#dictationPanel .ap-speed-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function dictPlaySentence(idx){
+  const d = _dictData[idx];
+  if(!d) return;
+  ttsSpeak(d.text);
+  // If lesson has real audio, attempt timestamp-based play would go here
+}
+
+function checkDictSentence(idx){
+  const d = _dictData[idx];
+  if(!d) return;
+  const inp = document.getElementById('dinput_'+idx);
+  if(!inp) return;
+  const userText = inp.value.trim();
+  d.userAnswer = userText;
+  d.checked = true;
+
+  const origWords  = d.text.toLowerCase().replace(/[^a-z0-9'\s]/g,'').split(/\s+/).filter(Boolean);
+  const userWords  = userText.toLowerCase().replace(/[^a-z0-9'\s]/g,'').split(/\s+/).filter(Boolean);
+
+  let correct=0;
+  const feedback = origWords.map((w,i)=>{
+    const uw = userWords[i]||'';
+    if(uw===w){ correct++; return `<span class="dict-word-ok">${w}</span>`; }
+    if(uw) return `<span class="dict-word-err">${uw}</span> <span style="font-size:11px;color:var(--muted)">(→${w})</span>`;
+    return `<span class="dict-word-missing">[${w}]</span>`;
+  }).join(' ');
+
+  const extra = userWords.slice(origWords.length).map(w=>`<span class="dict-word-err">${w}</span>`).join(' ');
+  const pct = origWords.length ? Math.round(correct/origWords.length*100) : 0;
+
+  const fb = document.getElementById('dfeedback_'+idx);
+  const ans = document.getElementById('danswer_'+idx);
+  const sent = document.getElementById('dsent_'+idx);
+  if(fb) fb.innerHTML = `${feedback}${extra ? ' '+extra:''} <span style="font-size:12px;color:var(--muted);margin-left:8px">(${pct}%)</span>`;
+  if(ans) { ans.classList.toggle('show', pct<100); }
+  if(sent){ sent.classList.toggle('dict-correct', pct>=80); sent.classList.toggle('dict-wrong', pct<80); }
+  inp.disabled = true;
+}
+
+function checkAllDictation(){
+  _dictData.forEach((_,i)=>{ if(!_dictData[i].checked) checkDictSentence(i); });
+  const checked = _dictData.filter(d=>d.checked);
+  if(!checked.length) return;
+  const scores2 = checked.map(d=>{
+    const orig = d.text.toLowerCase().replace(/[^a-z0-9'\s]/g,'').split(/\s+/).filter(Boolean);
+    const user = d.userAnswer.toLowerCase().replace(/[^a-z0-9'\s]/g,'').split(/\s+/).filter(Boolean);
+    return orig.length ? user.filter((w,i)=>w===orig[i]).length/orig.length : 0;
+  });
+  const avg = Math.round(scores2.reduce((a,b)=>a+b,0)/scores2.length*100);
+  const scoreEl = document.getElementById('dictScore');
+  if(scoreEl) scoreEl.innerHTML = `🏆 Điểm: <strong style="font-size:20px">${avg}%</strong>`;
+}
+
+function resetDictation(){
+  _dictData.forEach(d=>{ d.userAnswer=''; d.checked=false; });
+  initDictation();
+}
+
+// ═══════════════════════════════════════════
+//  QR CODE FOR LESSONS
+// ═══════════════════════════════════════════
+function showLessonQR(lessonId, lessonTitle){
+  const overlay = document.getElementById('qrOverlay');
+  const canvas  = document.getElementById('qrCanvas');
+  const titleEl = document.getElementById('qrTitle');
+  const subEl   = document.getElementById('qrSub');
+  const urlEl   = document.getElementById('qrUrl');
+  if(!overlay||!canvas) return;
+
+  const url = `${location.origin}${location.pathname}#lesson=${lessonId}`;
+  titleEl.textContent = lessonTitle||'Bài nghe';
+  subEl.textContent = 'Học sinh quét để vào bài ngay';
+  urlEl.textContent = url;
+
+  // Clear old QR
+  canvas.innerHTML = '';
+  if(typeof QRCode !== 'undefined'){
+    new QRCode(canvas, {text:url, width:200, height:200, colorDark:'#1a1a2e', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M});
+  } else {
+    canvas.innerHTML = `<div style="padding:20px;color:var(--muted);font-size:13px">QR không khả dụng</div>`;
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeQrModal(){
+  document.getElementById('qrOverlay').classList.remove('open');
+}
+
+function downloadQR(){
+  const canvas = document.querySelector('#qrCanvas canvas');
+  if(!canvas){ showToast('Không tìm thấy ảnh QR','e'); return; }
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'lesson-qr.png';
+  a.click();
+  showToast('✅ Đã tải ảnh QR');
+}
+
+// ═══════════════════════════════════════════
+//  PRINT LESSON TO PDF
+// ═══════════════════════════════════════════
+function printLesson(){
+  if(!curLesson){ showToast('Chưa chọn bài nghe','e'); return; }
+  const w = window.open('', '_blank');
+  if(!w) return;
+  const qs = (curLesson.questions||[]).map((q,i)=>{
+    if(q.type==='fib'){
+      return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${(q.sentence||'').replace(/_+/g,'<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>')}</div>`;
+    }
+    if(q.type==='mc'){
+      const opts = (q.options||[]).map((o,j)=>`<div style="margin-left:24px">${['A','B','C','D'][j]}. ${o}</div>`).join('');
+      return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${q.question||''}<br>${opts}</div>`;
+    }
+    return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${q.question||q.sentence||''}</div>`;
+  }).join('');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>${curLesson.title||'Bài nghe'}</title>
+    <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;font-size:14px;line-height:1.8;color:#111}
+    h1{font-size:20px;margin-bottom:4px}h2{font-size:14px;color:#555;font-weight:normal;margin-bottom:24px;border-bottom:1px solid #ddd;padding-bottom:8px}
+    u{border-bottom:2px solid #333;text-decoration:none;display:inline-block;min-width:80px}
+    @media print{body{margin:20px}}</style></head>
+    <body><h1>${curLesson.title||'Bài nghe'}</h1>
+    <h2>Lớp: __________________ &nbsp; Tên: __________________ &nbsp; Ngày: __________________</h2>
+    ${qs||'<p>Không có câu hỏi</p>'}
+    <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+
 </script>
 </body>
 </html>
