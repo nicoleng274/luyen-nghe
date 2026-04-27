@@ -1348,7 +1348,7 @@ function calcStreak() {
 
 function renderHome() {
   // Stats row
-  const learnedCount = vocabList.filter(v=>v.learned).length;
+  const learnedCount = vocabList.filter(v=>{ const s=getSR(v.word); return s.reps>=3&&!isDue(v.word); }).length;
   const streak = calcStreak();
   const hsv = document.getElementById('hsTotalVocab');
   const hsl = document.getElementById('hsLearned');
@@ -2141,17 +2141,9 @@ async function checkQuiz() {
   }
   if(_quizMode==='mc'){
     let score=0;
-    quizData.forEach((_,i)=>{if(document.getElementById(`qi${i}`)?.querySelector('.opt-ok')&&!document.getElementById(`qi${i}`)?.querySelector('.opt-err')) score++;
-    // more accurate: no wrong selection = correct
-    const hasErr=document.getElementById(`qi${i}`)?.querySelector('.opt-err');
-    const hasOk=document.getElementById(`qi${i}`)?.querySelector('.opt-ok');
-    if(hasOk&&!hasErr) {} // already counted above would double — reset
-    });
-    // recount cleanly
-    score=0;
     quizData.forEach((_,i)=>{
       const q=document.getElementById(`qi${i}`);
-      if(q&&q.querySelector('.opt-ok')&&!q.querySelector('.opt-err'))score++;
+      if(q&&q.querySelector('.opt-ok')&&!q.querySelector('.opt-err')) score++;
     });
     document.getElementById('qPBar').style.width='100%';
     await saveQuizScore(score,quizData.length);
@@ -3857,6 +3849,7 @@ function selectLesson(key){
   document.querySelectorAll('.lesson-tab').forEach(t=>t.classList.remove('active'));
   const el=document.getElementById('lt-'+key); if(el)el.classList.add('active');
   listenDone=false; qMode='fib';
+  _matchCorrect=0; _matchSelected=null; _matchPairs=[];
   curLesson={key,...LESSONS[key]};
   const l=curLesson;
   document.getElementById('lIcon').textContent=l.icon||'🎧';
@@ -4145,7 +4138,7 @@ function updateSR(word, rating) {
   } else {
     const q = rating===2 ? 5 : 3;
     sr.ef = Math.max(1.3, sr.ef + 0.1 - (5-q)*0.08);
-    sr.interval = sr.reps===0 ? 1 : sr.reps===1 ? 4 : Math.round(sr.interval*sr.ef);
+    sr.interval = sr.reps===0 ? 1 : sr.reps===1 ? 4 : Math.min(365, Math.round(sr.interval*sr.ef));
     sr.reps++;
     sr.nextReview = now + sr.interval*24*60*60*1000;
   }
@@ -4247,7 +4240,7 @@ function rateCard(rating) {
   updateSR(item.word, rating);
   if(rating===0){ _fcCounts.no++;
     if(_fcQueue.filter(q=>q.word===item.word).length<2)
-      _fcQueue.splice(Math.min(_fcIdx+3,_fcQueue.length),0,item);
+      _fcQueue.splice(Math.min(_fcIdx+3, _fcQueue.length), 0, item);
   } else if(rating===1) _fcCounts.ok++;
   else _fcCounts.ez++;
   _fcIdx++;
@@ -4593,6 +4586,7 @@ function getTimerLabel() {
 }
 
 async function autoCheckQuiz() {
+  if(quizDone) return;
   showToast('⏰ Hết giờ! Đang chấm điểm...');
   await checkQuiz();
 }
