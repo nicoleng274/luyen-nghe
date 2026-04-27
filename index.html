@@ -2160,7 +2160,7 @@ async function checkQuiz() {
     inp.disabled=true;
     const qi=document.getElementById(`qi${i}`);
     if(user===correct){score++;qi?.classList.add('correct');res.innerHTML='<span style="color:var(--ok)">✅ Đúng</span>';}
-    else{qi?.classList.add('wrong');res.innerHTML=`<span style="color:var(--err)">✖ ${correct}</span>`;}
+    else{qi?.classList.add('wrong');res.innerHTML=`<span style="color:var(--err)">✖ ${esc(correct)}</span>`;}
     if(item.ipa&&ipa)ipa.textContent=item.ipa;
   });
   document.getElementById('qPBar').style.width='100%';
@@ -3858,7 +3858,7 @@ function selectLesson(key){
   document.getElementById('lIcon').textContent=l.icon||'🎧';
   document.getElementById('lTitle').textContent=l.name;
   document.getElementById('lSub').textContent=l.desc||'';
-  document.getElementById('lTags').innerHTML=`<span class="lh-tag lht-blue">${l.level||'General'}</span><span class="lh-tag lht-green">${(l.questions||[]).length} câu điền</span><span class="lh-tag lht-blue">${(l.mcQuestions||[]).length} câu trắc nghiệm</span>`;
+  document.getElementById('lTags').innerHTML=`<span class="lh-tag lht-blue">${esc(l.level||'General')}</span><span class="lh-tag lht-green">${(l.questions||[]).length} câu điền</span><span class="lh-tag lht-blue">${(l.mcQuestions||[]).length} câu trắc nghiệm</span>`;
   document.getElementById('lMediaTitle').textContent=(l.youtube?'🎬':'🎧')+' '+l.name;
   const mb=document.getElementById('lMediaBody');
   if(l.youtube){
@@ -5008,7 +5008,7 @@ function globalSearch(q){
   }
 
   if(!sections.length){
-    res.innerHTML=`<div class="gs-no-results">Không tìm thấy kết quả cho "<strong>${q}</strong>"</div>`;
+    res.innerHTML=`<div class="gs-no-results">Không tìm thấy kết quả cho "<strong>${esc(q)}</strong>"</div>`;
   } else {
     res.innerHTML=sections.join('');
   }
