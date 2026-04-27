@@ -727,6 +727,7 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <button class="btn btn-s btn-sm" id="wdSaveBtn" onclick="saveWordFromPanel()">💾 Lưu</button>
+      <button class="btn btn-g btn-sm" id="wdCopyBtn" style="display:none" onclick="copyWordToClipboard()" title="Sao chép từ">📋</button>
       <button class="btn btn-sm" id="wdDeleteBtn" style="background:rgba(255,107,138,.15);color:var(--err);border:1px solid rgba(255,107,138,.3);display:none" onclick="deleteWordFromPanel()">🗑 Xóa</button>
       <div class="wd-close" onclick="closeWordPanel()">✕</div>
     </div>
@@ -777,7 +778,7 @@ audio{width:100%;accent-color:var(--accent)}
     <div class="fc-scene" onclick="flipCard()">
       <div class="fc-card" id="fcCard">
         <div class="fc-face fc-front">
-          <div class="fc-hint">nhấn để lật</div>
+          <div class="fc-hint">nhấn để lật <span style="opacity:.5;font-size:10px">(Space)</span></div>
           <div class="fc-word" id="fcWord"></div>
           <div class="fc-ipa"  id="fcIpa"></div>
           <div class="fc-hint" id="fcPosHint" style="margin-top:12px;margin-bottom:0"></div>
@@ -1055,6 +1056,7 @@ audio{width:100%;accent-color:var(--accent)}
     <div class="result-summary" id="lResult">
       <div><div class="res-big" id="lResScore"></div><div style="font-size:12px;color:var(--muted);margin-top:2px">Điểm số</div></div>
       <div style="flex:1"><div style="font-size:15px;font-weight:700;margin-bottom:4px" id="lResMsg"></div><div style="font-size:13px;color:var(--muted)" id="lResSub"></div></div>
+      <button class="btn btn-g btn-sm" onclick="setQMode(qMode)" style="flex-shrink:0">🔄 Thử lại</button>
     </div>
   </div>
 </section>
@@ -1610,6 +1612,8 @@ function openWordPanel(word) {
   document.getElementById('wdSaveBtn').disabled = true;
   const delBtn = document.getElementById('wdDeleteBtn');
   if(delBtn) delBtn.style.display = 'inline-flex';
+  const copyBtn = document.getElementById('wdCopyBtn');
+  if(copyBtn) copyBtn.style.display = 'inline-flex';
 
   // Audio
   const audioRow = document.getElementById('wdAudio');
@@ -1740,6 +1744,17 @@ function closeWordPanel() {
 function saveWord() { /* kept for compat */ }
 function saveWordFromPanel() { /* already saved */ }
 function clearVocab(){document.getElementById('vocabInput').value='';}
+
+function copyWordToClipboard() {
+  const word = document.getElementById('wdWord').textContent;
+  const ipa  = document.getElementById('wdIpa').textContent;
+  const entry = vocabList.find(v => v.word === word);
+  const meanings = entry?.viMeanings
+    ? Object.entries(entry.viMeanings).map(([pos,defs])=>`[${pos}] ${defs.filter(d=>d&&d!=='…').slice(0,2).join('; ')}`).join(' | ')
+    : '';
+  const text = [word, ipa ? `(${ipa})` : '', meanings].filter(Boolean).join(' ');
+  navigator.clipboard.writeText(text).then(()=>showToast('📋 Đã sao chép!')).catch(()=>showToast('Không thể sao chép','e'));
+}
 
 function deleteWordFromPanel() {
   const word = document.getElementById('wdWord').textContent;
@@ -3869,6 +3884,8 @@ function renderLessonTable(){
         </div>
       </td>
     </tr>`).join('');
+  // Auto-select first lesson if none currently selected
+  if(!curLesson && entries.length) selectLesson(entries[0][0]);
 }
 
 // Keep renderLessonTabs as alias for compatibility
@@ -5067,12 +5084,33 @@ function clearGsInput(){
   closeGsResults();
 }
 
-// Global ESC handler — close overlays
+// Global keyboard shortcuts
 document.addEventListener('keydown', e => {
-  if(e.key !== 'Escape') return;
-  const qr = document.getElementById('qrOverlay');
-  if(qr?.classList.contains('open')){ closeQrModal(); return; }
-  closeGsResults();
+  // ESC — close overlays
+  if(e.key === 'Escape') {
+    const qr = document.getElementById('qrOverlay');
+    if(qr?.classList.contains('open')){ closeQrModal(); return; }
+    const wp = document.getElementById('wdPanel');
+    if(wp?.classList.contains('open')){ closeWordPanel(); return; }
+    closeGsResults();
+    return;
+  }
+  // Flashcard keyboard shortcuts (only when flashcard page is active)
+  const fcActive = document.getElementById('page-flashcard')?.classList.contains('active');
+  if(!fcActive) return;
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if(e.key === ' ' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    const session = document.getElementById('fcSession');
+    if(session?.style.display !== 'none') {
+      if(!_fcFlipped) flipCard();
+    }
+  }
+  if(_fcFlipped) {
+    if(e.key === '1') rateCard(0);
+    else if(e.key === '2') rateCard(1);
+    else if(e.key === '3') rateCard(2);
+  }
 });
 
 // ═══════════════════════════════════════════
