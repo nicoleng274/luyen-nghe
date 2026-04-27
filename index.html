@@ -708,7 +708,15 @@ audio{width:100%;accent-color:var(--accent)}
       <div class="vt-chip f-adj" data-f="adjective" onclick="setVtFilter('adjective',this)">Adj</div>
       <div class="vt-chip f-adv" data-f="adverb" onclick="setVtFilter('adverb',this)">Adv</div>
     </div>
-    <button class="btn btn-g btn-sm" onclick="clearAllVocab()" style="white-space:nowrap">🗑 Xóa tất cả</button>
+    <select id="vtSort" class="if" style="min-width:120px;padding:8px 10px;font-size:13px" onchange="renderVocabTable()">
+      <option value="newest">Mới nhất</option>
+      <option value="oldest">Cũ nhất</option>
+      <option value="az">A → Z</option>
+      <option value="learned">Đã học trước</option>
+    </select>
+    <button class="btn btn-g btn-sm" onclick="exportVocabJSON()" title="Xuất danh sách từ vựng">⬇ Xuất</button>
+    <label class="btn btn-g btn-sm" title="Nhập danh sách từ vựng" style="cursor:pointer">⬆ Nhập<input type="file" accept=".json" style="display:none" onchange="importVocabJSON(this)"></label>
+    <button class="btn btn-g btn-sm" onclick="clearAllVocab()" style="white-space:nowrap;color:var(--err)">🗑 Xóa tất cả</button>
   </div>
 
   <div class="vt-stats">
@@ -1458,7 +1466,7 @@ function renderHome() {
   // Activity feed
   const ra=document.getElementById('homeAct');
   ra.innerHTML=activity.length
-    ?activity.slice(-5).reverse().map(a=>`<div class="act-item"><div class="act-icon" style="background:${a.bg}">${a.icon}</div><div style="flex:1">${a.text}</div><div style="font-size:11.5px;color:var(--muted)">${a.time}</div></div>`).join('')
+    ?activity.slice(-10).reverse().map(a=>`<div class="act-item"><div class="act-icon" style="background:${a.bg}">${a.icon}</div><div style="flex:1">${a.text}</div><div style="font-size:11.5px;color:var(--muted)">${a.time}</div></div>`).join('')
     :'<div class="empty" style="padding:24px"><div class="empty-i" style="font-size:28px">📝</div><div style="font-size:13px">Chưa có hoạt động</div></div>';
 }
 function addAct(icon,bg,text){
@@ -1643,7 +1651,14 @@ function renderVocabTable() {
     return `<span class="pos-badge ${cls}">${pos}</span>`;
   };
 
-  tbody.innerHTML = [...filtered].reverse().map(v => {
+  const sort = document.getElementById('vtSort')?.value || 'newest';
+  const sorted = [...filtered];
+  if(sort==='newest') sorted.reverse();
+  else if(sort==='az') sorted.sort((a,b)=>a.word.localeCompare(b.word));
+  else if(sort==='learned') sorted.sort((a,b)=>(b.learned?1:0)-(a.learned?1:0));
+  // 'oldest' = natural order (insertion order)
+
+  tbody.innerHTML = sorted.map(v => {
     const posList = Object.keys(v.meanings||{});
     const firstPos = posList[0] || '';
     const firstViDefs = (v.viMeanings?.[firstPos] || v.meanings?.[firstPos] || []).slice(0,2);
@@ -1690,6 +1705,35 @@ function clearAllVocab() {
   if(!confirm('Xóa toàn bộ danh sách từ vựng?')) return;
   vocabList = []; localStorage.setItem(lsk('eh_vocab'),'[]');
   renderVocabTable(); showToast('Đã xóa tất cả');
+}
+function exportVocabJSON() {
+  if(!vocabList.length){ showToast('Chưa có từ vựng để xuất','e'); return; }
+  const data = {version:1, profile:_profile, exported:new Date().toISOString(), words:vocabList};
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vocab_${_profile}_${new Date().toLocaleDateString('vi-VN').replace(/\//g,'-')}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+  showToast('Đã xuất ' + vocabList.length + ' từ');
+}
+function importVocabJSON(input) {
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const words = Array.isArray(data) ? data : (data.words || []);
+      if(!words.length){ showToast('File không có từ vựng','e'); return; }
+      const existing = new Set(vocabList.map(v=>v.word));
+      const added = words.filter(w=>w.word && !existing.has(w.word));
+      vocabList.push(...added);
+      localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
+      renderVocabTable(); renderHome();
+      showToast('Đã nhập ' + added.length + ' từ mới');
+    } catch { showToast('File không hợp lệ','e'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 // ── Word detail panel ──
@@ -2293,7 +2337,7 @@ async function checkQuiz() {
     inp.disabled=true;
     const qi=document.getElementById(`qi${i}`);
     if(user===correct){score++;qi?.classList.add('correct');res.innerHTML='<span style="color:var(--ok)">✅ Đúng</span>';}
-    else{qi?.classList.add('wrong');res.innerHTML=`<span style="color:var(--err)">✖ ${esc(correct)}</span>`;}
+    else{qi?.classList.add('wrong');res.innerHTML=`<span style="color:var(--err)">✖ Bạn: <em>${esc(user)||'(để trống)'}</em></span> <span style="color:var(--ok)">→ Đúng: <strong>${esc(correct)}</strong></span>`;}
     if(item.ipa&&ipa)ipa.textContent=item.ipa;
   });
   document.getElementById('qPBar').style.width='100%';
@@ -3994,7 +4038,9 @@ function selectLesson(key){
   document.getElementById('lIcon').textContent=l.icon||'🎧';
   document.getElementById('lTitle').textContent=l.name;
   document.getElementById('lSub').textContent=l.desc||'';
-  document.getElementById('lTags').innerHTML=`<span class="lh-tag lht-blue">${esc(l.level||'General')}</span><span class="lh-tag lht-green">${(l.questions||[]).length} câu điền</span><span class="lh-tag lht-blue">${(l.mcQuestions||[]).length} câu trắc nghiệm</span>`;
+  const _lScores = scores.filter(s=>s.lesson===l.name);
+  const _lBest = _lScores.length ? Math.round(Math.max(..._lScores.map(s=>s.total?s.score/s.total:0))*100) : null;
+  document.getElementById('lTags').innerHTML=`<span class="lh-tag lht-blue">${esc(l.level||'General')}</span><span class="lh-tag lht-green">${(l.questions||[]).length} câu điền</span><span class="lh-tag lht-blue">${(l.mcQuestions||[]).length} câu trắc nghiệm</span>${_lBest!==null?`<span class="lh-tag" style="background:rgba(61,219,165,.15);color:var(--ok)">🏆 Tốt nhất: ${_lBest}%</span><span class="lh-tag" style="background:rgba(124,111,255,.1);color:var(--muted)">${_lScores.length} lần làm</span>`:''}`;
   document.getElementById('lMediaTitle').textContent=(l.youtube?'🎬':'🎧')+' '+l.name;
   const mb=document.getElementById('lMediaBody');
   if(l.youtube){
@@ -4402,8 +4448,11 @@ function endFcSession() {
   document.getElementById('fcSession').style.display='none';
   document.getElementById('fcDone').style.display='block';
   document.getElementById('fcControls').style.display='flex';
+  const _fcTotal = _fcCounts.ez + _fcCounts.ok + _fcCounts.no || 1;
+  const _fcAcc = Math.round((_fcCounts.ez + _fcCounts.ok) / _fcTotal * 100);
   document.getElementById('fcDoneMsg').innerHTML=
-    `✔ Thuộc: <strong style="color:var(--ok)">${_fcCounts.ez}</strong> &nbsp;
+    `<div style="font-size:28px;font-weight:800;color:${_fcAcc>=80?'var(--ok)':_fcAcc>=50?'var(--warn)':'var(--err)'};margin-bottom:8px">${_fcAcc}%</div>
+     ✔ Thuộc: <strong style="color:var(--ok)">${_fcCounts.ez}</strong> &nbsp;
      ◎ Nhớ được: <strong style="color:var(--warn)">${_fcCounts.ok}</strong> &nbsp;
      ✖ Chưa nhớ: <strong style="color:var(--err)">${_fcCounts.no}</strong>`;
   updateFcStats();
