@@ -1903,6 +1903,12 @@ function startQuiz() {
   else if(_quizMode==='match')  renderMatchQuiz();
   else if(_quizMode==='listen') renderListenQuiz();
   addAct('🧠','rgba(255,107,138,.2)',`Quiz ${Q_MODE_LABELS[_quizMode]}: ${quizData.length} câu`);
+
+  // Start timer
+  const limit = parseInt(document.getElementById('qTimeLimit')?.value||'0');
+  const fill  = document.getElementById('qTimerFill');
+  if(fill){ fill.style.width='100%'; fill.style.background='var(--a3)'; }
+  startTimer(limit);
 }
 
 function updateQP() {
@@ -4477,15 +4483,6 @@ async function autoCheckQuiz() {
   await checkQuiz();
 }
 
-// Patch startQuiz to also kick off timer
-const _origStartQuiz = startQuiz;
-function startQuiz() {
-  _origStartQuiz();
-  const limit = parseInt(document.getElementById('qTimeLimit')?.value||'0');
-  const fill  = document.getElementById('qTimerFill');
-  if(fill){ fill.style.width='100%'; fill.style.background='var(--a3)'; }
-  startTimer(limit);
-}
 
 // ── Add time limit selector into quiz setup (runs after DOM ready) ──
 (function injectTimeLimitUI() {
