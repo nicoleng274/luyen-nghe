@@ -16,7 +16,7 @@
   --r:12px;--rs:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .2s,color .2s}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -590,7 +590,7 @@ audio{width:100%;accent-color:var(--accent)}
   <!-- Global Search -->
   <div class="gs-wrap">
     <span class="gs-icon">🔍</span>
-    <input class="gs-input" id="gsInput" placeholder="Tìm kiếm toàn app..." oninput="globalSearch(this.value)" onfocus="globalSearch(this.value)" onblur="setTimeout(()=>closeGsResults(),200)">
+    <input class="gs-input" id="gsInput" placeholder="Tìm kiếm toàn app..." oninput="globalSearch(this.value)" onfocus="globalSearch(this.value)" onblur="setTimeout(()=>closeGsResults(),200)" onkeydown="if(event.key==='Escape'){clearGsInput();this.blur()}">
     <button class="gs-clear" onclick="clearGsInput()" id="gsClearBtn" style="display:none">✕</button>
     <div class="gs-results" id="gsResults"></div>
   </div>
@@ -4981,7 +4981,7 @@ function globalSearch(q){
   if(pMatches.length){
     sections.push(`<div class="gs-result-cat">💬 Cụm từ</div>`);
     pMatches.forEach(p=>{
-      sections.push(`<div class="gs-result-item" onclick="sp('phrase');closeGsResults()">
+      sections.push(`<div class="gs-result-item" onclick="sp('phrase');const pi=document.getElementById('phraseInput');if(pi){pi.value='${p.phrase.replace(/'/g,"\\'")}';lookupPhrase();}closeGsResults()">
         <span style="font-size:16px">💬</span>
         <div><div style="font-weight:600">${p.phrase}</div><div style="font-size:11.5px;color:var(--muted)">${(p.vi||'').slice(0,50)}</div></div>
       </div>`);
@@ -4989,17 +4989,17 @@ function globalSearch(q){
   }
 
   // Search lessons
-  const lessons = JSON.parse(localStorage.getItem('eh_lessons')||'[]');
-  const lMatches = lessons.filter(l=>
-    (l.title||'').toLowerCase().includes(kw)||
-    (l.topic||'').toLowerCase().includes(kw)
+  const lMatches = Object.entries(LESSONS).filter(([k,l])=>
+    (l.name||'').toLowerCase().includes(kw)||
+    (l.desc||'').toLowerCase().includes(kw)||
+    (l.transcript||'').toLowerCase().includes(kw)
   ).slice(0,3);
   if(lMatches.length){
     sections.push(`<div class="gs-result-cat">🎧 Bài nghe</div>`);
-    lMatches.forEach(l=>{
-      sections.push(`<div class="gs-result-item" onclick="sp('listen');closeGsResults()">
-        <span style="font-size:16px">🎧</span>
-        <div><div style="font-weight:600">${l.title}</div><div style="font-size:11.5px;color:var(--muted)">${(l.topic||'').slice(0,50)}</div></div>
+    lMatches.forEach(([key,l])=>{
+      sections.push(`<div class="gs-result-item" onclick="sp('listen');selectLesson('${key}');closeGsResults()">
+        <span style="font-size:16px">${l.icon||'🎧'}</span>
+        <div><div style="font-weight:600">${l.name}</div><div style="font-size:11.5px;color:var(--muted)">${(l.desc||'').slice(0,50)}</div></div>
       </div>`);
     });
   }
@@ -5024,6 +5024,14 @@ function clearGsInput(){
   if(btn) btn.style.display='none';
   closeGsResults();
 }
+
+// Global ESC handler — close overlays
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  const qr = document.getElementById('qrOverlay');
+  if(qr?.classList.contains('open')){ closeQrModal(); return; }
+  closeGsResults();
+});
 
 // ═══════════════════════════════════════════
 //  MOBILE MENU
@@ -5215,12 +5223,12 @@ function printLesson(){
     return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${q.question||q.sentence||''}</div>`;
   }).join('');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <title>${curLesson.title||'Bài nghe'}</title>
+    <title>${curLesson.name||'Bài nghe'}</title>
     <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;font-size:14px;line-height:1.8;color:#111}
     h1{font-size:20px;margin-bottom:4px}h2{font-size:14px;color:#555;font-weight:normal;margin-bottom:24px;border-bottom:1px solid #ddd;padding-bottom:8px}
     u{border-bottom:2px solid #333;text-decoration:none;display:inline-block;min-width:80px}
     @media print{body{margin:20px}}</style></head>
-    <body><h1>${curLesson.title||'Bài nghe'}</h1>
+    <body><h1>${curLesson.name||'Bài nghe'}</h1>
     <h2>Lớp: __________________ &nbsp; Tên: __________________ &nbsp; Ngày: __________________</h2>
     ${qs||'<p>Không có câu hỏi</p>'}
     <script>window.onload=()=>window.print()<\/script></body></html>`);
