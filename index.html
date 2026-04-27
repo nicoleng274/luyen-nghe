@@ -621,6 +621,27 @@ audio{width:100%;accent-color:var(--accent)}
 <!-- HOME -->
 <section id="page-home" class="page active">
   <div class="ph"><div class="pt">Chào mừng trở lại! <span>👋</span></div><div class="ps">Hôm nay bạn muốn luyện gì?</div></div>
+
+  <!-- Stats row -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="homeStatsRow">
+    <div class="card" style="text-align:center;padding:16px 12px;cursor:pointer" onclick="sp('vocab')">
+      <div style="font-size:28px;font-weight:800;line-height:1" id="hsTotalVocab">0</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px">Từ đã lưu</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;cursor:pointer" onclick="sp('vocab')">
+      <div style="font-size:28px;font-weight:800;line-height:1;color:var(--ok)" id="hsLearned">0</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px">Đã thuộc</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px;cursor:pointer" onclick="sp('scores')">
+      <div style="font-size:28px;font-weight:800;line-height:1;color:var(--accent)" id="hsTotalQuiz">0</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px">Lượt quiz</div>
+    </div>
+    <div class="card" style="text-align:center;padding:16px 12px">
+      <div style="font-size:28px;font-weight:800;line-height:1;color:var(--warn)" id="hsStreak">0</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px">Ngày liên tiếp 🔥</div>
+    </div>
+  </div>
+
   <div class="home-grid">
     <div class="qc qc-p" onclick="sp('vocab')"><div class="qc-bg">📖</div><div class="qc-icon">📖</div><div class="qc-title">Tra từ vựng</div><div class="qc-desc">IPA, nghĩa VI/EN, collocation, audio</div><div class="qc-arrow">↗</div></div>
     <div class="qc qc-g" onclick="sp('phrase')"><div class="qc-bg">💬</div><div class="qc-icon">💬</div><div class="qc-title">Collocation</div><div class="qc-desc">Phrasal verb, cấu trúc ngữ pháp</div><div class="qc-arrow">↗</div></div>
@@ -769,10 +790,11 @@ audio{width:100%;accent-color:var(--accent)}
     <div id="fcRatingWrap" style="display:none">
       <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:10px">Bạn nhớ từ này ở mức nào?</div>
       <div class="fc-btns">
-        <button class="fc-btn fc-btn-no" onclick="rateCard(0)">✖ Không nhớ<br><span style="font-size:11px;opacity:.7">ôn lại sớm</span></button>
-        <button class="fc-btn fc-btn-ok" onclick="rateCard(1)">◎ Nhớ được<br><span style="font-size:11px;opacity:.7">ôn lại sau</span></button>
-        <button class="fc-btn fc-btn-ez" onclick="rateCard(2)">✔ Thuộc rồi<br><span style="font-size:11px;opacity:.7">ôn lại muộn</span></button>
+        <button class="fc-btn fc-btn-no" id="fcBtnNo" onclick="rateCard(0)">✖ Không nhớ<br><span class="fc-interval-hint" style="font-size:11px;opacity:.7">ôn lại sau 10 phút</span></button>
+        <button class="fc-btn fc-btn-ok" id="fcBtnOk" onclick="rateCard(1)">◎ Nhớ được<br><span class="fc-interval-hint" id="fcHintOk" style="font-size:11px;opacity:.7">ôn lại sau 1 ngày</span></button>
+        <button class="fc-btn fc-btn-ez" id="fcBtnEz" onclick="rateCard(2)">✔ Thuộc rồi<br><span class="fc-interval-hint" id="fcHintEz" style="font-size:11px;opacity:.7">ôn lại sau 4 ngày</span></button>
       </div>
+      <div id="fcReviewInfo" style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:8px"></div>
     </div>
 
     <!-- Audio button -->
@@ -868,7 +890,7 @@ audio{width:100%;accent-color:var(--accent)}
         <div style="font-size:11.5px;color:var(--muted);margin-top:3px">Nghe TTS, gõ từ</div>
       </div>
     </div>
-    <button class="btn btn-p" style="width:100%" onclick="startQuiz()">▶ Bắt đầu</button>
+    <button class="btn btn-p" id="quizStartBtn" style="width:100%" onclick="startQuiz()">▶ Bắt đầu</button>
   </div>
 
   <!-- Quiz area -->
@@ -1114,12 +1136,15 @@ audio{width:100%;accent-color:var(--accent)}
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
         <div style="font-size:15px;font-weight:700">📋 Lịch sử tất cả lượt thi</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="scFilterStudent" class="if" placeholder="🔍 Tìm học sinh..." style="width:160px;font-size:13px;padding:7px 11px" oninput="renderScores()">
-          <select id="scFilterLesson" class="if" style="width:160px;font-size:13px;padding:7px 11px" onchange="renderScores()">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input id="scFilterStudent" class="if" placeholder="🔍 Tìm học sinh..." style="width:140px;font-size:13px;padding:7px 11px" oninput="renderScores()">
+          <select id="scFilterLesson" class="if" style="width:140px;font-size:13px;padding:7px 11px" onchange="renderScores()">
             <option value="">Tất cả bài</option>
           </select>
+          <input type="date" id="scFilterFrom" class="if" style="width:140px;font-size:13px;padding:7px 11px" onchange="renderScores()" title="Từ ngày">
+          <input type="date" id="scFilterTo"   class="if" style="width:140px;font-size:13px;padding:7px 11px" onchange="renderScores()" title="Đến ngày">
           <button class="btn btn-g btn-sm" onclick="exportScoresCSV()">⬇ CSV</button>
+          <button class="btn btn-g btn-sm" onclick="exportScoresXLS()" style="color:var(--ok)">📊 Excel</button>
           <button class="btn btn-g btn-sm" onclick="clearScores()">🗑 Xóa</button>
         </div>
       </div>
@@ -1302,11 +1327,37 @@ function sp(id) {
 // ═══════════════════════════════════════════
 //  HOME
 // ═══════════════════════════════════════════
+function calcStreak() {
+  const daySet = new Set(scores.map(s=>s.date));
+  let streak=0;
+  for(let i=0;i<365;i++){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    if(daySet.has(d.toLocaleDateString('vi-VN'))) streak++;
+    else if(i>0) break;
+  }
+  return streak;
+}
+
 function renderHome() {
+  // Stats row
+  const learnedCount = vocabList.filter(v=>v.learned).length;
+  const streak = calcStreak();
+  const hsv = document.getElementById('hsTotalVocab');
+  const hsl = document.getElementById('hsLearned');
+  const hsq = document.getElementById('hsTotalQuiz');
+  const hss = document.getElementById('hsStreak');
+  if(hsv) hsv.textContent = vocabList.length;
+  if(hsl) hsl.textContent = learnedCount;
+  if(hsq) hsq.textContent = scores.length;
+  if(hss) hss.textContent = streak || '–';
+
+  // Recent words
   const rw=document.getElementById('homeWords');
   rw.innerHTML=rWords.length
     ?rWords.slice(-14).map(w=>`<span class="chip" onclick="lookupWordDirect('${w}')">${w}</span>`).join('')
     :'<span style="color:var(--muted);font-size:13px">Chưa có từ nào</span>';
+
+  // Activity feed
   const ra=document.getElementById('homeAct');
   ra.innerHTML=activity.length
     ?activity.slice(-5).reverse().map(a=>`<div class="act-item"><div class="act-icon" style="background:${a.bg}">${a.icon}</div><div style="flex:1">${a.text}</div><div style="font-size:11.5px;color:var(--muted)">${a.time}</div></div>`).join('')
@@ -1441,10 +1492,21 @@ function setVtFilter(f, el) {
   renderVocabTable();
 }
 
+function updateQuizStartBtn() {
+  const btn = document.getElementById('quizStartBtn');
+  if(!btn) return;
+  const n = vocabList.length;
+  const ok = n >= 4;
+  btn.disabled = !ok;
+  btn.textContent = ok ? '▶ Bắt đầu' : `▶ Cần thêm ${4-n} từ nữa (hiện có ${n})`;
+  btn.style.opacity = ok ? '' : '0.65';
+}
+
 function renderVocabTable() {
   const search = (document.getElementById('vtSearch')?.value || '').toLowerCase();
   const tbody = document.getElementById('vtBody');
   const empty = document.getElementById('vtEmpty');
+  updateQuizStartBtn();
 
   let filtered = vocabList.filter(v => {
     if(search && !v.word.includes(search)) return false;
@@ -1562,9 +1624,11 @@ function renderWordPanelContent(entry) {
     html += `<div class="wd-pos-block">
       <div class="wd-pos-label" style="color:${col};background:${bg}">${pos}</div>`;
     enDefs.forEach((def, i) => {
-      const vi = viDefs[i] && viDefs[i]!=='…' ? viDefs[i] : '';
+      const rawVi = viDefs[i];
+      const vi = rawVi && rawVi!=='…' ? rawVi : '';
+      const loading = rawVi==='…';
       html += `<div class="wd-def">
-        ${vi ? `<div class="wd-def-vi">${vi}</div>` : ''}
+        ${vi ? `<div class="wd-def-vi">${vi}</div>` : loading ? `<div class="wd-def-vi" style="color:var(--muted);font-style:italic;font-size:12px">⏳ Đang dịch...</div>` : ''}
         <div class="wd-def-en">${def}</div>
       </div>`;
     });
@@ -2031,10 +2095,34 @@ function renderListenQuiz() {
     </div>`).join('');
 }
 
-function lqPlay(i,word,audioUrl) {
-  const btn=document.getElementById(`qi${i}`)?.querySelector('.lq-play');
-  if(btn){btn.textContent='⏳';setTimeout(()=>btn.textContent='🔊',1500);}
-  if(audioUrl){new Audio(audioUrl).play().catch(()=>ttsSpeak(word));}else ttsSpeak(word);
+function lqPlay(i, word, audioUrl) {
+  const btn = document.getElementById(`qi${i}`)?.querySelector('.lq-play');
+  if(btn){ btn.innerHTML='<span class="spinner" style="width:18px;height:18px;border-width:2px"></span>'; }
+  const done = () => { if(btn) btn.textContent='🔊'; };
+  if(audioUrl){
+    const a = new Audio(audioUrl);
+    a.onended = done; a.onerror = ()=>{ ttsSpeakDone(word, done); };
+    a.play().catch(()=>ttsSpeakDone(word, done));
+  } else {
+    ttsSpeakDone(word, done);
+  }
+}
+
+function ttsSpeakDone(word, cb) {
+  if(!('speechSynthesis' in window)){ showToast('Trình duyệt không hỗ trợ TTS','e'); cb?.(); return; }
+  window.speechSynthesis.cancel();
+  const speak = () => {
+    const utt = new SpeechSynthesisUtterance(word);
+    utt.lang='en-US'; utt.rate=0.85;
+    const voices = window.speechSynthesis.getVoices();
+    const eng = voices.find(v=>v.lang.startsWith('en')&&v.localService) || voices.find(v=>v.lang.startsWith('en'));
+    if(eng) utt.voice=eng;
+    utt.onend = cb; utt.onerror = cb;
+    window.speechSynthesis.speak(utt);
+  };
+  const voices = window.speechSynthesis.getVoices();
+  if(voices.length) speak();
+  else { window.speechSynthesis.onvoiceschanged = ()=>{ speak(); window.speechSynthesis.onvoiceschanged=null; }; }
 }
 
 // Check (fill + listen text-based; MC auto-checked inline)
@@ -4125,7 +4213,26 @@ function flipCard() {
   if(_fcFlipped) return;
   _fcFlipped=true;
   document.getElementById('fcCard').classList.add('flipped');
-  setTimeout(()=>document.getElementById('fcRatingWrap').style.display='block', 280);
+  setTimeout(()=>{
+    document.getElementById('fcRatingWrap').style.display='block';
+    // Show interval hints based on current SR data
+    const item = _fcQueue[_fcIdx];
+    if(!item) return;
+    const sr = getSR(item.word);
+    const fmtDays = d => d===0 ? '10 phút' : d===1 ? '1 ngày' : `${d} ngày`;
+    // Simulate next interval for each rating
+    const okInterval  = sr.reps===0 ? 1 : sr.reps===1 ? 4 : Math.round(sr.interval * Math.max(1.3, sr.ef + 0.1 - (5-3)*0.08));
+    const ezInterval  = sr.reps===0 ? 4 : Math.round(sr.interval * sr.ef);
+    const hintOk  = document.getElementById('fcHintOk');
+    const hintEz  = document.getElementById('fcHintEz');
+    const info    = document.getElementById('fcReviewInfo');
+    if(hintOk) hintOk.textContent = `ôn lại sau ${fmtDays(okInterval)}`;
+    if(hintEz) hintEz.textContent = `ôn lại sau ${fmtDays(Math.max(ezInterval, okInterval+1))}`;
+    if(info && sr.reps > 0) {
+      const last = new Date(sr.nextReview - sr.interval*24*60*60*1000);
+      info.textContent = `Lần ôn thứ ${sr.reps} · EF: ${sr.ef?.toFixed(2)||'2.10'}`;
+    } else if(info) info.textContent = '';
+  }, 280);
 }
 
 function rateCard(rating) {
@@ -4550,14 +4657,7 @@ function renderScores() {
     document.getElementById('stBest').textContent = Math.round(best*100)+'%';
   }
   // Streak
-  const daySet = new Set(scores.map(s=>s.date));
-  let streak=0;
-  for(let i=0;i<365;i++){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    if(daySet.has(d.toLocaleDateString('vi-VN'))) streak++;
-    else if(i>0) break;
-  }
-  document.getElementById('stStreak').textContent = streak;
+  document.getElementById('stStreak').textContent = calcStreak();
 
   // ── Populate lesson filter ──
   const ls = document.getElementById('scFilterLesson');
@@ -4568,12 +4668,7 @@ function renderScores() {
   }
 
   // ── History table ──
-  const nameF   = (document.getElementById('scFilterStudent')?.value||'').toLowerCase();
-  const lessonF = document.getElementById('scFilterLesson')?.value||'';
-  const filtered = [...scores].reverse().filter(s=>
-    (!nameF   || s.student.toLowerCase().includes(nameF)) &&
-    (!lessonF || s.lesson===lessonF)
-  );
+  const filtered = getFilteredScores();
   const tb = document.getElementById('scBody');
   if(!filtered.length) {
     tb.innerHTML=`<tr><td colspan="8"><div class="empty" style="padding:28px"><div class="empty-i" style="font-size:28px">📊</div><div style="font-size:13px">Chưa có dữ liệu</div></div></td></tr>`;
@@ -4757,18 +4852,64 @@ function drawCharts() {
 }
 
 // ── Export CSV ──
+function getFilteredScores() {
+  const nameF   = (document.getElementById('scFilterStudent')?.value||'').toLowerCase();
+  const lessonF = document.getElementById('scFilterLesson')?.value||'';
+  const fromF   = document.getElementById('scFilterFrom')?.value||'';
+  const toF     = document.getElementById('scFilterTo')?.value||'';
+  return [...scores].reverse().filter(s=>{
+    if(nameF   && !s.student.toLowerCase().includes(nameF)) return false;
+    if(lessonF && s.lesson!==lessonF) return false;
+    if(fromF || toF){
+      const parts=(s.date||'').split('/');
+      if(parts.length===3){
+        const iso=`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        if(fromF && iso<fromF) return false;
+        if(toF   && iso>toF)   return false;
+      }
+    }
+    return true;
+  });
+}
+
 function exportScoresCSV() {
-  if(!scores.length){showToast('Chưa có dữ liệu','e');return;}
+  const data = getFilteredScores();
+  if(!data.length){showToast('Không có dữ liệu để xuất','e');return;}
   const header=['Học sinh','Lớp','Bài','Điểm','Tổng','Tỉ lệ','Thời gian','Ngày','Giờ'];
-  const rows=scores.map(s=>[s.student,s.class,s.lesson,s.score,s.total,
+  const rows=data.map(s=>[s.student,s.class,s.lesson,s.score,s.total,
     Math.round(s.score/s.total*100)+'%',s.duration||'–',s.date,s.time]);
-  const csv=[header,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const csv=[header,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;a.download=`englishhub_scores_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();URL.revokeObjectURL(url);
   showToast('✅ Đã xuất CSV');
+}
+
+function exportScoresXLS() {
+  const data = getFilteredScores();
+  if(!data.length){showToast('Không có dữ liệu để xuất','e');return;}
+  const header=['Học sinh','Lớp','Bài','Điểm','Tổng','Tỉ lệ','Thời gian','Ngày','Giờ'];
+  const rows=data.map(s=>[s.student,s.class,s.lesson,s.score,s.total,
+    Math.round(s.score/s.total*100)+'%',s.duration||'–',s.date,s.time]);
+  const esc=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const xlsHtml=`<html xmlns:o="urn:schemas-microsoft-com:office:office"
+    xmlns:x="urn:schemas-microsoft-com:office:excel"
+    xmlns="http://www.w3.org/TR/REC-html40">
+  <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+  <x:ExcelWorksheet><x:Name>Diem so</x:Name><x:WorksheetOptions><x:DisplayGridlines/>
+  </x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+  <body><table border="1" style="font-family:Arial,sans-serif;font-size:12px">
+  <thead><tr>${header.map(h=>`<th style="background:#5a4fd8;color:#fff;padding:6px 10px;font-weight:bold">${esc(h)}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map((r,i)=>`<tr style="background:${i%2?'#f5f5ff':'#fff'}">${r.map(v=>`<td style="padding:5px 10px">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></body></html>`;
+  const blob=new Blob([xlsHtml],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`englishhub_scores_${new Date().toISOString().slice(0,10)}.xls`;
+  a.click();URL.revokeObjectURL(url);
+  showToast('✅ Đã xuất Excel (.xls)');
 }
 
 function clearScores(){
@@ -4918,12 +5059,18 @@ function initDictation(){
   const scoreEl = document.getElementById('dictScore');
   if(scoreEl) scoreEl.innerHTML='';
 
-  // Collect sentences from lesson transcript or questions
+  // Collect sentences from transcript → FIB questions → MC questions
   let sentences = [];
-  if(curLesson.transcript){
-    sentences = curLesson.transcript.split(/[.!?]+/).map(s=>s.trim()).filter(s=>s.length>8).slice(0,10);
-  } else if(curLesson.questions){
-    sentences = curLesson.questions.filter(q=>q.type==='fib'||q.type==='mc').slice(0,8).map(q=>q.sentence||q.question||'');
+  if(curLesson.transcript && curLesson.transcript.trim()){
+    sentences = curLesson.transcript.split(/(?<=[.!?])\s+/).map(s=>s.trim()).filter(s=>s.length>8).slice(0,12);
+  }
+  if(!sentences.length && curLesson.questions?.length){
+    sentences = curLesson.questions.map(q=>
+      (q.text||'').replace(/___+/g,'______').trim()
+    ).filter(s=>s.length>8).slice(0,10);
+  }
+  if(!sentences.length && curLesson.mcQuestions?.length){
+    sentences = curLesson.mcQuestions.map(q=>(q.text||'').trim()).filter(s=>s.length>8).slice(0,8);
   }
 
   if(!sentences.length){
