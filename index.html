@@ -1561,13 +1561,13 @@ function renderVocabTable() {
     const viText = firstViDefs.join('; ') || '–';
     const enText = firstEnDefs[0] || '–';
     const example = v.example ? `"${v.example.length>80 ? v.example.slice(0,80)+'…' : v.example}"` : '–';
-    const audioSafe = (v.audioUrl||'').replace(/'/g,"\\'");
-    const wordSafe = v.word.replace(/'/g,"\\'");
+    const audioSafe = esc(v.audioUrl||'');
+    const wordSafe = esc(v.word);
 
-    return `<tr class="vt-row${v.learned?' learned':''}" onclick="openWordPanel('${wordSafe}')">
+    return `<tr class="vt-row${v.learned?' learned':''}" data-word="${wordSafe}" onclick="openWordPanel(this.dataset.word)">
       <td>
         <div class="vt-word-cell">
-          <div class="vt-audio-btn" onclick="event.stopPropagation();${v.audioUrl?`playAudio('${audioSafe}')`:`ttsSpeak('${wordSafe}')`}" title="Phát âm">🔊</div>
+          <div class="vt-audio-btn" ${v.audioUrl?`data-url="${audioSafe}"`:`data-word="${wordSafe}"`} onclick="event.stopPropagation();${v.audioUrl?'playAudio(this.dataset.url)':'ttsSpeak(this.dataset.word)'}" title="Phát âm">🔊</div>
           <div>
             <div class="vt-word">${esc(v.word)}</div>
             <div class="vt-ipa">${esc(v.ipa||'')}</div>
@@ -1582,7 +1582,7 @@ function renderVocabTable() {
       <td><div class="vt-ex">${esc(example)}</div></td>
       <td style="text-align:center" onclick="event.stopPropagation()">
         <label class="vt-toggle">
-          <input type="checkbox" ${v.learned?'checked':''} onchange="toggleLearned('${wordSafe}',this.checked)">
+          <input type="checkbox" ${v.learned?'checked':''} data-word="${wordSafe}" onchange="toggleLearned(this.dataset.word,this.checked)">
           <div class="vt-toggle-track"></div>
         </label>
       </td>
@@ -1618,7 +1618,7 @@ function openWordPanel(word) {
   // Audio
   const audioRow = document.getElementById('wdAudio');
   audioRow.innerHTML = '';
-  if(entry.audioUrl) audioRow.innerHTML += `<button class="audio-btn" onclick="playAudio('${entry.audioUrl.replace(/'/g,"\\'")}')">🔊 Phát âm</button>`;
+  if(entry.audioUrl) audioRow.innerHTML += `<button class="audio-btn" data-url="${esc(entry.audioUrl)}" onclick="playAudio(this.dataset.url)">🔊 Phát âm</button>`;
   audioRow.innerHTML += `<button class="audio-btn tts" data-word="${esc(entry.word)}" onclick="ttsSpeak(this.dataset.word)">🗣️ TTS</button>`;
 
   renderWordPanelContent(entry);
