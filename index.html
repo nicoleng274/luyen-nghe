@@ -725,8 +725,9 @@ audio{width:100%;accent-color:var(--accent)}
       <div class="wd-word" id="wdWord"></div>
       <div class="wd-ipa" id="wdIpa"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px">
       <button class="btn btn-s btn-sm" id="wdSaveBtn" onclick="saveWordFromPanel()">💾 Lưu</button>
+      <button class="btn btn-sm" id="wdDeleteBtn" style="background:rgba(255,107,138,.15);color:var(--err);border:1px solid rgba(255,107,138,.3);display:none" onclick="deleteWordFromPanel()">🗑 Xóa</button>
       <div class="wd-close" onclick="closeWordPanel()">✕</div>
     </div>
   </div>
@@ -1365,7 +1366,7 @@ function renderHome() {
   // Recent words
   const rw=document.getElementById('homeWords');
   rw.innerHTML=rWords.length
-    ?rWords.slice(-14).map(w=>`<span class="chip" onclick="lookupWordDirect('${w}')">${w}</span>`).join('')
+    ?rWords.slice(-14).map(w=>`<span class="chip" data-word="${esc(w)}" onclick="lookupWordDirect(this.dataset.word)">${esc(w)}</span>`).join('')
     :'<span style="color:var(--muted);font-size:13px">Chưa có từ nào</span>';
 
   // Activity feed
@@ -1390,7 +1391,10 @@ async function lookupWord() {
   if(w) lookupWordDirect(w);
 }
 
+let _lookupInProgress = false;
 async function lookupWordDirect(word) {
+  if(_lookupInProgress) return;
+  _lookupInProgress = true;
   document.getElementById('vocabInput').value = word;
   // Chuyển sang trang vocab nếu chưa ở đó
   if(!document.getElementById('page-vocab').classList.contains('active')) sp('vocab');
@@ -1424,6 +1428,8 @@ async function lookupWordDirect(word) {
   } catch(e) {
     ld.style.display = 'none';
     showToast('Không tìm thấy từ "' + word + '"', 'e');
+  } finally {
+    _lookupInProgress = false;
   }
 }
 
@@ -1602,6 +1608,8 @@ function openWordPanel(word) {
   document.getElementById('wdIpa').textContent = entry.ipa || '';
   document.getElementById('wdSaveBtn').textContent = '✅ Đã lưu';
   document.getElementById('wdSaveBtn').disabled = true;
+  const delBtn = document.getElementById('wdDeleteBtn');
+  if(delBtn) delBtn.style.display = 'inline-flex';
 
   // Audio
   const audioRow = document.getElementById('wdAudio');
@@ -1732,6 +1740,23 @@ function closeWordPanel() {
 function saveWord() { /* kept for compat */ }
 function saveWordFromPanel() { /* already saved */ }
 function clearVocab(){document.getElementById('vocabInput').value='';}
+
+function deleteWordFromPanel() {
+  const word = document.getElementById('wdWord').textContent;
+  if(!word) return;
+  if(!confirm(`Xóa từ "${word}" khỏi danh sách?`)) return;
+  vocabList = vocabList.filter(v => v.word !== word);
+  localStorage.setItem('eh_vocab', JSON.stringify(vocabList));
+  // Remove from recent words too
+  rWords = rWords.filter(w => w !== word);
+  localStorage.setItem('eh_rwords', JSON.stringify(rWords));
+  // Remove SR data
+  localStorage.removeItem('sr_' + word);
+  closeWordPanel();
+  renderVocabTable();
+  renderHome();
+  showToast('🗑 Đã xóa: ' + word);
+}
 function playAudio(url){new Audio(url).play().catch(()=>{});}
 
 
@@ -1999,7 +2024,7 @@ function renderFillQuiz() {
     return `<div class="qi" id="qi${i}">
       <div class="qi-num">Q${i+1}</div>
       <div class="qi-q">${def}</div>
-      <input id="qa${i}" class="qi-inp" placeholder="Nhập từ..." oninput="updateQP()" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('qa${i+1}')?.focus()}">
+      <input id="qa${i}" class="qi-inp" placeholder="Nhập từ..." oninput="updateQP()" onkeydown="if(event.key==='Enter'){event.preventDefault();const nx=document.getElementById('qa${i+1}');if(nx)nx.focus();else document.getElementById('qCheckBtn')?.focus()}">
       <div class="qi-res" id="qr${i}"></div>
       <div class="qi-ipa" id="qipa${i}"></div>
     </div>`;
@@ -3940,7 +3965,10 @@ function selMC(qi,oi){
   document.getElementById(`mco${qi}_${oi}`).classList.add('sel');
 }
 async function submitListen(){
-  if(!curLesson)return; listenDone=true;
+  if(!curLesson)return;
+  const qs = qMode==='fib' ? (curLesson.questions||[]) : (curLesson.mcQuestions||[]);
+  if(!qs.length){ showToast('Bài này chưa có câu hỏi','e'); return; }
+  listenDone=true;
   let score=0,total=0;
   if(qMode==='fib'){
     const qs=curLesson.questions||[]; total=qs.length;
@@ -4618,7 +4646,7 @@ async function autoCheckQuiz() {
 async function saveQuizScore(score, total) {
   stopTimer();
   const duration = getTimerLabel();
-  const pct = Math.round(score/total*100);
+  const pct = total ? Math.round(score/total*100) : 0;
   showToast(`🎉 ${score}/${total} (${pct}%) · ${duration}`);
   addAct('🧠','rgba(255,107,138,.2)',`Quiz ${Q_MODE_LABELS[_quizMode]}: ${score}/${total} · ${duration}`);
   const entry = {
@@ -4678,7 +4706,7 @@ function renderScores() {
     tb.innerHTML=`<tr><td colspan="8"><div class="empty" style="padding:28px"><div class="empty-i" style="font-size:28px">📊</div><div style="font-size:13px">Chưa có dữ liệu</div></div></td></tr>`;
   } else {
     tb.innerHTML = filtered.map(s=>{
-      const pct=Math.round(s.score/s.total*100);
+      const pct=s.total?Math.round(s.score/s.total*100):0;
       const bc=pct>=80?'sg':pct>=50?'sm':'sl';
       return `<tr>
         <td>${esc(s.student)}</td><td>${esc(s.class)}</td>
@@ -4735,7 +4763,7 @@ function renderClassBoard() {
   // Group by student → best score per student
   const byStudent = {};
   classScores.forEach(s=>{
-    const pct=s.score/s.total;
+    const pct=s.total?s.score/s.total:0;
     if(!byStudent[s.student]) byStudent[s.student]={name:s.student,best:0,total:0,count:0,scores:[]};
     byStudent[s.student].best  = Math.max(byStudent[s.student].best, pct);
     byStudent[s.student].total+= pct;
@@ -4927,6 +4955,17 @@ renderPhraseTable();
 renderHome();
 renderVocabTable();
 renderLessonTable();
+
+// Handle #lesson=<key> deep-link from QR codes
+(function handleHashLesson(){
+  const hash = window.location.hash;
+  if(!hash.startsWith('#lesson=')) return;
+  const key = decodeURIComponent(hash.slice(8));
+  if(!LESSONS[key]) return;
+  sp('listen');
+  setTimeout(()=>selectLesson(key), 100);
+  window.history.replaceState(null,'',window.location.pathname);
+})();
 
 // ═══════════════════════════════════════════
 //  THEME TOGGLE (Dark / Light)
