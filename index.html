@@ -533,6 +533,7 @@ audio{width:100%;accent-color:var(--accent)}
 /* ══ QR MODAL ══ */
 .qr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;display:none;align-items:center;justify-content:center}
 .qr-overlay.open{display:flex}
+#profileModal.open{display:flex!important}
 .qr-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;text-align:center;width:min(340px,90vw);box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .qr-title{font-size:16px;font-weight:800;margin-bottom:4px}
 .qr-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
@@ -603,11 +604,32 @@ audio{width:100%;accent-color:var(--accent)}
     <div class="ni" onclick="sp('listen')"><span class="ni-icon">🎧</span>Luyện nghe</div>
     <div class="ni" onclick="sp('scores')"><span class="ni-icon">📊</span>Điểm số</div>
   </nav>
+  <div style="padding:8px 10px">
+    <button id="profileBtn" onclick="openProfileModal()" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left">👤 default</button>
+  </div>
   <div class="sf" style="display:flex;align-items:center;justify-content:space-between">
     <span>EnglishHub v2.3</span>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Tối</button>
   </div>
 </aside>
+
+<!-- Profile Modal -->
+<div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:16px;padding:24px;width:min(380px,90vw);max-height:80vh;overflow-y:auto;border:1px solid var(--border)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h3 style="margin:0;font-size:16px">👤 Tài khoản</h3>
+      <button onclick="closeProfileModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">✕</button>
+    </div>
+    <div id="profileList" style="margin-bottom:16px"></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">TẠO TÀI KHOẢN MỚI</div>
+      <div style="display:flex;gap:8px">
+        <input id="newProfileName" class="if" placeholder="Tên người dùng..." style="flex:1" onkeydown="if(event.key==='Enter')createNewProfile()">
+        <button class="btn btn-p btn-sm" onclick="createNewProfile()">Tạo</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Bottom nav (mobile only) -->
 <nav class="bottom-nav" id="bottomNav">
@@ -1225,13 +1247,71 @@ const GS_URL = "https://script.google.com/macros/s/AKfycbyL4nDFufa4z-CsR9N_dw8Sv
 // HTML entity escaper — use for any user/API data inserted into innerHTML
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-let vocabList  = JSON.parse(localStorage.getItem('eh_vocab')   ||'[]');
-let phraseList = JSON.parse(localStorage.getItem('eh_phrases') ||'[]');
-let scores     = JSON.parse(localStorage.getItem('eh_scores')  ||'[]');
-let rWords     = JSON.parse(localStorage.getItem('eh_rwords')  ||'[]');
-let activity   = JSON.parse(localStorage.getItem('eh_act')     ||'[]');
+
+// ═══════════════════════════════════════════
+//  PROFILE SYSTEM
+// ═══════════════════════════════════════════
+let _profile = localStorage.getItem('eh_current_profile') || 'default';
+function lsk(k) { return _profile + '_' + k; }
+
+let vocabList  = JSON.parse(localStorage.getItem(lsk('eh_vocab'))   ||'[]');
+let phraseList = JSON.parse(localStorage.getItem(lsk('eh_phrases')) ||'[]');
+let scores     = JSON.parse(localStorage.getItem(lsk('eh_scores'))  ||'[]');
+let rWords     = JSON.parse(localStorage.getItem(lsk('eh_rwords'))  ||'[]');
+let activity   = JSON.parse(localStorage.getItem(lsk('eh_act'))     ||'[]');
 let quizData=[], quizDone=false, curLesson=null, listenDone=false, qMode='fib';
 let _curWord=null;
+
+function getProfileList() {
+  const list = JSON.parse(localStorage.getItem('eh_profiles') || '["default"]');
+  if(!list.includes('default')) list.unshift('default');
+  return list;
+}
+function switchProfile(name) {
+  _profile = name;
+  localStorage.setItem('eh_current_profile', name);
+  vocabList  = JSON.parse(localStorage.getItem(lsk('eh_vocab'))   || '[]');
+  phraseList = JSON.parse(localStorage.getItem(lsk('eh_phrases')) || '[]');
+  scores     = JSON.parse(localStorage.getItem(lsk('eh_scores'))  || '[]');
+  rWords     = JSON.parse(localStorage.getItem(lsk('eh_rwords'))  || '[]');
+  activity   = JSON.parse(localStorage.getItem(lsk('eh_act'))     || '[]');
+  renderProfileBtn();
+  renderHome(); renderVocabTable(); renderPhraseTable(); renderScores();
+  showToast('👤 ' + name);
+}
+function renderProfileBtn() {
+  const btn = document.getElementById('profileBtn');
+  if(btn) btn.textContent = '👤 ' + _profile;
+}
+function openProfileModal() {
+  const list = getProfileList();
+  const items = list.map(p => `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:${p===_profile?'rgba(124,111,255,.15)':'var(--s2)'};margin-bottom:6px">
+    <span style="flex:1;font-weight:${p===_profile?700:400}">${esc(p)}${p===_profile?' ✓':''}</span>
+    ${p!==_profile?`<button class="btn btn-p btn-sm" data-name="${esc(p)}" onclick="switchProfile(this.dataset.name);closeProfileModal()">Chọn</button>`:''}
+    ${p!=='default'&&p!==_profile?`<button class="btn btn-sm" style="background:rgba(255,107,138,.15);color:var(--err)" data-name="${esc(p)}" onclick="deleteProfile(this.dataset.name)">🗑</button>`:''}
+  </div>`).join('');
+  document.getElementById('profileList').innerHTML = items;
+  document.getElementById('profileModal').classList.add('open');
+}
+function closeProfileModal() { document.getElementById('profileModal').classList.remove('open'); }
+function createNewProfile() {
+  const inp = document.getElementById('newProfileName');
+  const name = inp.value.trim();
+  if(!name) { showToast('Nhập tên người dùng', 'e'); return; }
+  const list = getProfileList();
+  if(list.includes(name)) { showToast('Tên đã tồn tại', 'e'); return; }
+  list.push(name);
+  localStorage.setItem('eh_profiles', JSON.stringify(list));
+  inp.value = '';
+  switchProfile(name);
+  closeProfileModal();
+}
+function deleteProfile(name) {
+  if(!confirm('Xóa tài khoản "' + name + '"? Dữ liệu học sẽ bị mất!')) return;
+  const list = getProfileList().filter(p => p !== name);
+  localStorage.setItem('eh_profiles', JSON.stringify(list));
+  openProfileModal();
+}
 
 // ═══════════════════════════════════════════
 //  FREE API HELPERS  — each optimised for one job
@@ -1383,7 +1463,7 @@ function renderHome() {
 function addAct(icon,bg,text){
   activity.push({icon,bg,text,time:new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})});
   if(activity.length>30)activity.shift();
-  localStorage.setItem('eh_act',JSON.stringify(activity));
+  localStorage.setItem(lsk('eh_act'),JSON.stringify(activity));
 }
 
 // ═══════════════════════════════════════════
@@ -1426,7 +1506,7 @@ async function lookupWordDirect(word) {
 
     if(!rWords.includes(word.toLowerCase())) rWords.push(word.toLowerCase());
     if(rWords.length > 40) rWords.shift();
-    localStorage.setItem('eh_rwords', JSON.stringify(rWords));
+    localStorage.setItem(lsk('eh_rwords'), JSON.stringify(rWords));
     addAct('📖','rgba(124,111,255,.2)',`Tra từ: <strong>${esc(word)}</strong>`);
     showToast('✅ Đã thêm: ' + word);
 
@@ -1459,7 +1539,7 @@ async function autoSaveAndOpen(word, parsed) {
   // Remove old entry if exists
   vocabList = vocabList.filter(v => v.word !== word);
   vocabList.push(entry);
-  localStorage.setItem('eh_vocab', JSON.stringify(vocabList));
+  localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
   renderVocabTable();
   openWordPanel(word);
 
@@ -1474,7 +1554,7 @@ async function autoSaveAndOpen(word, parsed) {
   }
   // After all translations, update storage + re-render
   const idx = vocabList.findIndex(v => v.word === word);
-  if(idx >= 0) { vocabList[idx] = entry; localStorage.setItem('eh_vocab', JSON.stringify(vocabList)); }
+  if(idx >= 0) { vocabList[idx] = entry; localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList)); }
   renderVocabTable();
   // Refresh panel if still open for this word
   if(document.getElementById('wdPanel').classList.contains('open') &&
@@ -1530,7 +1610,13 @@ function renderVocabTable() {
   updateQuizStartBtn();
 
   let filtered = vocabList.filter(v => {
-    if(search && !v.word.includes(search)) return false;
+    if(search) {
+      const wordMatch = v.word.toLowerCase().includes(search);
+      const exMatch   = (v.example||'').toLowerCase().includes(search);
+      const defMatch  = Object.values(v.meanings||{}).flat().some(d=>(d||'').toLowerCase().includes(search));
+      const viMatch   = Object.values(v.viMeanings||{}).flat().some(d=>(d||'').toLowerCase().includes(search));
+      if(!wordMatch && !exMatch && !defMatch && !viMatch) return false;
+    }
     if(_vtFilterActive !== 'all') {
       const hasPOS = Object.keys(v.meanings || {}).includes(_vtFilterActive);
       if(!hasPOS) return false;
@@ -1595,13 +1681,13 @@ function renderVocabTable() {
 
 function toggleLearned(word, val) {
   const idx = vocabList.findIndex(v => v.word === word);
-  if(idx >= 0) { vocabList[idx].learned = val; localStorage.setItem('eh_vocab', JSON.stringify(vocabList)); }
+  if(idx >= 0) { vocabList[idx].learned = val; localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList)); }
   renderVocabTable();
 }
 
 function clearAllVocab() {
   if(!confirm('Xóa toàn bộ danh sách từ vựng?')) return;
-  vocabList = []; localStorage.setItem('eh_vocab','[]');
+  vocabList = []; localStorage.setItem(lsk('eh_vocab'),'[]');
   renderVocabTable(); showToast('Đã xóa tất cả');
 }
 
@@ -1702,7 +1788,7 @@ async function loadPanelExtras(entry) {
   entry._syns = syns; entry._ants = ants; entry._cols = cols;
   // Update storage
   const idx = vocabList.findIndex(v => v.word === entry.word);
-  if(idx >= 0) localStorage.setItem('eh_vocab', JSON.stringify(vocabList));
+  if(idx >= 0) localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
   fillPanelSynAnt(entry);
 }
 
@@ -1725,7 +1811,7 @@ function toggleLearnedFromPanel(word) {
   const idx = vocabList.findIndex(v => v.word === word);
   if(idx < 0) return;
   vocabList[idx].learned = !vocabList[idx].learned;
-  localStorage.setItem('eh_vocab', JSON.stringify(vocabList));
+  localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
   const btn = document.getElementById('wdLearnBtn');
   if(btn) btn.textContent = vocabList[idx].learned ? '📚 Đánh dấu chưa học' : '✅ Đánh dấu đã học';
   renderVocabTable();
@@ -1733,7 +1819,7 @@ function toggleLearnedFromPanel(word) {
 
 function deleteVocab(word) {
   vocabList = vocabList.filter(v => v.word !== word);
-  localStorage.setItem('eh_vocab', JSON.stringify(vocabList));
+  localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
   closeWordPanel();
   renderVocabTable();
   showToast('Đã xóa: ' + word);
@@ -1764,12 +1850,12 @@ function deleteWordFromPanel() {
   if(!word) return;
   if(!confirm(`Xóa từ "${word}" khỏi danh sách?`)) return;
   vocabList = vocabList.filter(v => v.word !== word);
-  localStorage.setItem('eh_vocab', JSON.stringify(vocabList));
+  localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
   // Remove from recent words too
   rWords = rWords.filter(w => w !== word);
-  localStorage.setItem('eh_rwords', JSON.stringify(rWords));
+  localStorage.setItem(lsk('eh_rwords'), JSON.stringify(rWords));
   // Remove SR data
-  localStorage.removeItem('sr_' + word);
+  localStorage.removeItem(lsk('sr_' + word));
   closeWordPanel();
   renderVocabTable();
   renderHome();
@@ -1960,7 +2046,7 @@ async function lookupPhrase(){
 
 function savePhrase(info){
   if(phraseList.find(p=>p.phrase===info.phrase)){showToast('Đã lưu rồi');return;}
-  phraseList.push(info); localStorage.setItem('eh_phrases',JSON.stringify(phraseList));
+  phraseList.push(info); localStorage.setItem(lsk('eh_phrases'),JSON.stringify(phraseList));
   renderPhraseTable(); showToast('✅ Đã lưu: '+info.phrase);
 }
 function addPhraseManual(){
@@ -1969,10 +2055,10 @@ function addPhraseManual(){
   const s=prompt('Cấu trúc (tùy chọn):')||'';
   const ex=prompt('Ví dụ (tùy chọn):')||'';
   phraseList.push({phrase,type:'expression',vi,structure:s,example:ex});
-  localStorage.setItem('eh_phrases',JSON.stringify(phraseList));
+  localStorage.setItem(lsk('eh_phrases'),JSON.stringify(phraseList));
   renderPhraseTable(); showToast('✅ Đã thêm');
 }
-function deletePhrase(i){phraseList.splice(i,1);localStorage.setItem('eh_phrases',JSON.stringify(phraseList));renderPhraseTable();}
+function deletePhrase(i){phraseList.splice(i,1);localStorage.setItem(lsk('eh_phrases'),JSON.stringify(phraseList));renderPhraseTable();}
 function renderPhraseTable(){
   const tb=document.getElementById('pTBody');
   if(!phraseList.length){tb.innerHTML='<tr><td colspan="6"><div class="empty" style="padding:24px"><div class="empty-i" style="font-size:28px">💬</div><div style="font-size:13px">Chưa có phrase nào</div></div></td></tr>';return;}
@@ -2052,13 +2138,13 @@ function renderFillQuiz() {
 
 // Mode 2: Trắc nghiệm
 function renderMCQuiz() {
-  const pool=vocabList.map(v=>({word:v.word,vi:(Object.values(v.viMeanings||{})[0]||Object.values(v.meanings||{})[0]||[])[0]||v.word}));
+  const pool=vocabList.map(v=>({word:v.word,def:(Object.values(v.meanings||{})[0]||[])[0]||v.word}));
   const L=['A','B','C','D'];
   document.getElementById('qList').innerHTML=quizData.map((item,i)=>{
-    const correctVI=(Object.values(item.viMeanings||{})[0]||Object.values(item.meanings||{})[0]||[])[0]||item.word;
-    const wrongs=pool.filter(p=>p.word!==item.word).sort(()=>Math.random()-.5).slice(0,3).map(p=>p.vi);
-    const opts=[correctVI,...wrongs].sort(()=>Math.random()-.5);
-    const ci=opts.indexOf(correctVI);
+    const correctDef=(Object.values(item.meanings||{})[0]||[])[0]||item.word;
+    const wrongs=pool.filter(p=>p.word!==item.word).sort(()=>Math.random()-.5).slice(0,3).map(p=>p.def);
+    const opts=[correctDef,...wrongs].sort(()=>Math.random()-.5);
+    const ci=opts.indexOf(correctDef);
     return `<div class="mc-quiz-item" id="qi${i}">
       <div class="mc-quiz-q"><strong>${i+1}.</strong> ${item.word} <span style="color:var(--muted);font-size:13px">${item.ipa||''}</span></div>
       <div class="mc-quiz-opts">${opts.map((o,j)=>`
@@ -2093,7 +2179,7 @@ function renderMatchQuiz() {
   const pool=quizData.slice(0,Math.min(8,quizData.length));
   _matchPairs=pool.map(item=>({
     word:item.word,
-    vi:(Object.values(item.viMeanings||{})[0]||Object.values(item.meanings||{})[0]||[])[0]||item.word,
+    def:(Object.values(item.meanings||{})[0]||[])[0]||item.word,
     matched:false
   }));
   const right=[..._matchPairs].sort(()=>Math.random()-.5);
@@ -2101,7 +2187,7 @@ function renderMatchQuiz() {
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center">Click từ bên trái → Click nghĩa bên phải để nối</div>
     <div class="match-grid">
       <div class="match-col">${_matchPairs.map((p,i)=>`<div class="match-item" id="ml${i}" onclick="matchClick('L',${i})">${esc(p.word)}</div>`).join('')}</div>
-      <div class="match-col">${right.map((p,i)=>`<div class="match-item" id="mr${i}" data-word="${esc(p.word)}" onclick="matchClick('R',${i})">${esc(p.vi)}</div>`).join('')}</div>
+      <div class="match-col">${right.map((p,i)=>`<div class="match-item" id="mr${i}" data-word="${esc(p.word)}" onclick="matchClick('R',${i})">${esc(p.def)}</div>`).join('')}</div>
     </div>
     <div style="text-align:center;font-size:14px;color:var(--muted)" id="matchStatus">Đã nối: 0/${_matchPairs.length}</div>`;
 }
@@ -2293,7 +2379,7 @@ function showJsonTemplate() {
 // ── Admin authentication — SHA-256 hash (không lộ mật khẩu gốc) ──
 // Mật khẩu gốc: "english@2025" — đã được hash, không ai đọc được từ source code
 // Để đổi mật khẩu: chạy hashPassword('mật_khẩu_mới') trong console, copy hash vào đây
-const ADMIN_HASH = 'a7f3d2c1e9b4f6a8d5c2e7b3a9f1d4c6e2b5a8f7d3c9e1b6a4f2d8c5e3b7a2f9';
+const ADMIN_HASH = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
 let _adminUnlocked = false;
 let _adminFailCount = 0;
 let _adminLockUntil = 0;
@@ -4024,7 +4110,7 @@ async function submitListen(){
   const entry={student:name||'Ẩn danh',class:cls||'–',lesson:curLesson.name,score,total,date:new Date().toLocaleDateString('vi-VN'),time:new Date().toLocaleTimeString('vi-VN')};
   scores.push(entry);
   if(scores.length > 2000) scores.splice(0, scores.length - 2000);
-  localStorage.setItem('eh_scores',JSON.stringify(scores));
+  localStorage.setItem(lsk('eh_scores'),JSON.stringify(scores));
   try{await fetch(GS_URL,{method:'POST',body:JSON.stringify({...entry,lesson:curLesson.key})});}catch(e){}
 }
 function toggleTranscript(){document.getElementById('transcriptCard').classList.toggle('show');}
@@ -4177,10 +4263,10 @@ function previewLfYt(url) {
 //  FLASHCARD + SPACED REPETITION (SM-2 lite)
 // ═══════════════════════════════════════════
 function getSR(word) {
-  return JSON.parse(localStorage.getItem('sr_'+word)||'null') ||
+  return JSON.parse(localStorage.getItem(lsk('sr_'+word))||'null') ||
     {interval:0, ef:2.1, nextReview:0, reps:0, wrong:0};
 }
-function setSR(word, data) { localStorage.setItem('sr_'+word, JSON.stringify(data)); }
+function setSR(word, data) { localStorage.setItem(lsk('sr_'+word), JSON.stringify(data)); }
 
 function updateSR(word, rating) {
   const sr = getSR(word);
@@ -4684,7 +4770,7 @@ async function saveQuizScore(score, total) {
   };
   scores.push(entry);
   if(scores.length > 2000) scores.splice(0, scores.length - 2000); // keep last 2000
-  localStorage.setItem('eh_scores', JSON.stringify(scores));
+  localStorage.setItem(lsk('eh_scores'), JSON.stringify(scores));
   try { await fetch(GS_URL,{method:'POST',body:JSON.stringify({...entry,lesson:'quiz_vocab'})}); } catch(e) {}
 }
 
@@ -4972,11 +5058,12 @@ function exportScoresXLS() {
 
 function clearScores(){
   if(!confirm('Xóa toàn bộ lịch sử?'))return;
-  scores=[];localStorage.setItem('eh_scores','[]');
+  scores=[];localStorage.setItem(lsk('eh_scores'),'[]');
   renderScores();showToast('Đã xóa');
 }
 
 // ── INIT ──
+renderProfileBtn();
 renderPhraseTable();
 renderHome();
 renderVocabTable();
