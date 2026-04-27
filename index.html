@@ -1288,13 +1288,15 @@ async function apiAntonyms(word) {
 
 /* 5. Datamuse lc + rc → collocations (words that appear left/right of this word) */
 async function apiCollocations(word) {
-  const [left, right] = await Promise.all([
-    fetch(`https://api.datamuse.com/words?rc=${encodeURIComponent(word)}&max=6`).then(r=>r.json()),
-    fetch(`https://api.datamuse.com/words?lc=${encodeURIComponent(word)}&max=6`).then(r=>r.json())
-  ]);
-  const leftPhrases  = left.map(w => w.word + ' ' + word);
-  const rightPhrases = right.map(w => word + ' ' + w.word);
-  return [...new Set([...leftPhrases, ...rightPhrases])].slice(0, 10);
+  try {
+    const [left, right] = await Promise.all([
+      fetch(`https://api.datamuse.com/words?rc=${encodeURIComponent(word)}&max=6`).then(r=>r.ok?r.json():[]),
+      fetch(`https://api.datamuse.com/words?lc=${encodeURIComponent(word)}&max=6`).then(r=>r.ok?r.json():[])
+    ]);
+    const leftPhrases  = left.map(w => w.word + ' ' + word);
+    const rightPhrases = right.map(w => word + ' ' + w.word);
+    return [...new Set([...leftPhrases, ...rightPhrases])].slice(0, 10);
+  } catch { return []; }
 }
 
 /* 6. Web Speech API (browser built-in) → TTS, no server needed */
@@ -1326,6 +1328,7 @@ async function apiRelatedPhrases(phrase) {
 //  NAVIGATION
 // ═══════════════════════════════════════════
 function sp(id) {
+  stopTimer();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -4366,6 +4369,7 @@ let _srActive      = -1;   // index of active sentence
 let _srBlurred     = false;
 let _srLoopSent    = false;
 let _srAudioEl     = null;
+function _srOnEnded(){ srDeactivate(_srActive); }
 let _srTimestamps  = [];   // [{start, end}] in seconds
 let _srMediaRecorder= null;
 let _srRecChunks   = [];
@@ -4420,8 +4424,9 @@ function hookSrAudio() {
 
   // Remove old listener first
   _srAudioEl.removeEventListener('timeupdate', srOnTimeUpdate);
+  _srAudioEl.removeEventListener('ended', _srOnEnded);
   _srAudioEl.addEventListener('timeupdate', srOnTimeUpdate);
-  _srAudioEl.addEventListener('ended', ()=>{ srDeactivate(_srActive); });
+  _srAudioEl.addEventListener('ended', _srOnEnded);
 }
 
 function srOnTimeUpdate() {
