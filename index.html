@@ -1607,7 +1607,7 @@ function openWordPanel(word) {
   const audioRow = document.getElementById('wdAudio');
   audioRow.innerHTML = '';
   if(entry.audioUrl) audioRow.innerHTML += `<button class="audio-btn" onclick="playAudio('${entry.audioUrl.replace(/'/g,"\\'")}')">🔊 Phát âm</button>`;
-  audioRow.innerHTML += `<button class="audio-btn tts" onclick="ttsSpeak('${entry.word}')">🗣️ TTS</button>`;
+  audioRow.innerHTML += `<button class="audio-btn tts" data-word="${esc(entry.word)}" onclick="ttsSpeak(this.dataset.word)">🗣️ TTS</button>`;
 
   renderWordPanelContent(entry);
 
