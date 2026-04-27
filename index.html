@@ -4019,7 +4019,9 @@ async function submitListen(){
   showToast(`🎉 ${score}/${total} (${pct}%)`);
   addAct('🎧','rgba(255,209,102,.2)',`Luyện nghe: ${name||'HS'} – ${score}/${total}`);
   const entry={student:name||'Ẩn danh',class:cls||'–',lesson:curLesson.name,score,total,date:new Date().toLocaleDateString('vi-VN'),time:new Date().toLocaleTimeString('vi-VN')};
-  scores.push(entry);localStorage.setItem('eh_scores',JSON.stringify(scores));
+  scores.push(entry);
+  if(scores.length > 2000) scores.splice(0, scores.length - 2000);
+  localStorage.setItem('eh_scores',JSON.stringify(scores));
   try{await fetch(GS_URL,{method:'POST',body:JSON.stringify({...entry,lesson:curLesson.key})});}catch(e){}
 }
 function toggleTranscript(){document.getElementById('transcriptCard').classList.toggle('show');}
@@ -4675,6 +4677,7 @@ async function saveQuizScore(score, total) {
     time: new Date().toLocaleTimeString('vi-VN')
   };
   scores.push(entry);
+  if(scores.length > 2000) scores.splice(0, scores.length - 2000); // keep last 2000
   localStorage.setItem('eh_scores', JSON.stringify(scores));
   try { await fetch(GS_URL,{method:'POST',body:JSON.stringify({...entry,lesson:'quiz_vocab'})}); } catch(e) {}
 }
