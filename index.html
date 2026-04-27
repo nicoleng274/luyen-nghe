@@ -1424,7 +1424,7 @@ async function lookupWordDirect(word) {
     if(!rWords.includes(word.toLowerCase())) rWords.push(word.toLowerCase());
     if(rWords.length > 40) rWords.shift();
     localStorage.setItem('eh_rwords', JSON.stringify(rWords));
-    addAct('📖','rgba(124,111,255,.2)',`Tra từ: <strong>${word}</strong>`);
+    addAct('📖','rgba(124,111,255,.2)',`Tra từ: <strong>${esc(word)}</strong>`);
     showToast('✅ Đã thêm: ' + word);
 
   } catch(e) {
@@ -1949,10 +1949,10 @@ async function lookupPhrase(){
       </div>
     </div>
     ${d.ex?`<div class="ex-box" style="margin-top:0">"${d.ex}"</div>`:''}
-    ${related.length?`<div style="margin-top:14px"><div class="ib-label" style="margin-bottom:8px">🔗 Có thể liên quan <span class="src-badge src-datamuse" style="font-size:9px">Datamuse</span></div><div style="display:flex;flex-wrap:wrap;gap:7px">${related.map(w=>`<span class="chip" onclick="document.getElementById('phraseInput').value='${w}';lookupPhrase()">${w}</span>`).join('')}</div></div>`:''}
+    ${related.length?`<div style="margin-top:14px"><div class="ib-label" style="margin-bottom:8px">🔗 Có thể liên quan <span class="src-badge src-datamuse" style="font-size:9px">Datamuse</span></div><div style="display:flex;flex-wrap:wrap;gap:7px">${related.map(w=>`<span class="chip" data-word="${esc(w)}" onclick="document.getElementById('phraseInput').value=this.dataset.word;lookupPhrase()">${esc(w)}</span>`).join('')}</div></div>`:''}
     ${!info?`<div style="margin-top:12px;padding:10px 14px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.2);border-radius:8px;font-size:13px;color:var(--warn)">💡 Chưa có trong database nội bộ. Bạn có thể <strong>lưu thủ công</strong> bên dưới.</div>`:''}`;
   res.style.display='block';
-  addAct('💬','rgba(61,219,165,.2)',`Tra phrase: <strong>${raw}</strong>`);
+  addAct('💬','rgba(61,219,165,.2)',`Tra phrase: <strong>${esc(raw)}</strong>`);
 }
 
 function savePhrase(info){
@@ -3107,7 +3107,7 @@ function saveAiLesson() {
   renderAdminLessonList();
   renderLessonTable();
   showToast(`✅ Đã lưu: ${name}`);
-  addAct('🤖','rgba(124,111,255,.2)',`AI tạo bài: <strong>${name}</strong>`);
+  addAct('🤖','rgba(124,111,255,.2)',`AI tạo bài: <strong>${esc(name)}</strong>`);
 }
 
 function saveLessonForm() {
@@ -3158,7 +3158,7 @@ function saveLessonForm() {
   renderAdminLessonList();
   renderLessonTable();
   showToast(`✅ Đã lưu bài: ${name}`);
-  addAct('⚙️','rgba(255,209,102,.2)',`Lưu bài nghe: <strong>${name}</strong>`);
+  addAct('⚙️','rgba(255,209,102,.2)',`Lưu bài nghe: <strong>${esc(name)}</strong>`);
 }
 
 function extractDriveFileId(url) {
@@ -3844,7 +3844,7 @@ function saveUploadLesson() {
   renderAdminLessonList();
   renderLessonTable();
   showToast(`✅ Đã lưu: ${name}`);
-  addAct('📄','rgba(61,219,165,.2)',`Upload & parse: <strong>${name}</strong>`);
+  addAct('📄','rgba(61,219,165,.2)',`Upload & parse: <strong>${esc(name)}</strong>`);
 }
 
 
@@ -4017,7 +4017,7 @@ async function submitListen(){
   document.getElementById('lSubmitBtn').disabled=true;
   const name=document.getElementById('lName').value,cls=document.getElementById('lClass').value;
   showToast(`🎉 ${score}/${total} (${pct}%)`);
-  addAct('🎧','rgba(255,209,102,.2)',`Luyện nghe: ${name||'HS'} – ${score}/${total}`);
+  addAct('🎧','rgba(255,209,102,.2)',`Luyện nghe: ${esc(name||'HS')} – ${score}/${total}`);
   const entry={student:name||'Ẩn danh',class:cls||'–',lesson:curLesson.name,score,total,date:new Date().toLocaleDateString('vi-VN'),time:new Date().toLocaleTimeString('vi-VN')};
   scores.push(entry);
   if(scores.length > 2000) scores.splice(0, scores.length - 2000);
@@ -4037,7 +4037,7 @@ function getYtId(url){const m=url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-
 let _tt;
 function showToast(text,type='s'){
   const t=document.getElementById('toast');
-  t.className='toast t'+type; t.innerHTML=text; t.classList.add('show');
+  t.className='toast t'+type; t.textContent=text; t.classList.add('show');
   clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
@@ -4287,6 +4287,7 @@ function flipCard() {
 
 function rateCard(rating) {
   const item=_fcQueue[_fcIdx];
+  if(!item) return;
   updateSR(item.word, rating);
   if(rating===0){ _fcCounts.no++;
     if(_fcQueue.filter(q=>q.word===item.word).length<2)
