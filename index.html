@@ -151,19 +151,31 @@ select.if{cursor:pointer}
 .vt-ex{font-size:12.5px;color:var(--muted);font-style:italic;line-height:1.5;max-width:260px}
 
 /* toggle */
-.vt-toggle{position:relative;width:42px;height:24px;flex-shrink:0}
+.vt-toggle{position:relative;width:42px;height:24px;flex-shrink:0;display:inline-block}
 .vt-toggle input{opacity:0;width:0;height:0;position:absolute}
 .vt-toggle-track{
   position:absolute;inset:0;border-radius:12px;
-  background:var(--border);transition:.25s;cursor:pointer;
+  background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.28);
+  transition:.25s;cursor:pointer;
 }
-.vt-toggle input:checked+.vt-toggle-track{background:var(--ok)}
+.vt-toggle input:checked+.vt-toggle-track{background:var(--ok);border-color:var(--ok)}
 .vt-toggle-track::after{
   content:'';position:absolute;top:3px;left:3px;
-  width:18px;height:18px;border-radius:50%;background:#fff;
-  transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,.3);
+  width:16px;height:16px;border-radius:50%;background:#fff;
+  transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,.4);
 }
 .vt-toggle input:checked+.vt-toggle-track::after{transform:translateX(18px)}
+
+/* topic badge */
+.topic-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:700;letter-spacing:.04em;background:rgba(124,111,255,.18);color:var(--accent);margin-top:3px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* topic modal */
+.topic-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:500;align-items:center;justify-content:center}
+.topic-modal-bg.open{display:flex}
+.topic-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:min(540px,95vw);max-height:90vh;overflow-y:auto}
+/* topic filter chips */
+.vt-topic-row{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 2px}
+.topic-chip{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--s2);font-size:12px;font-weight:600;cursor:pointer;transition:.2s;color:var(--muted)}
+.topic-chip.on,.topic-chip:hover{background:rgba(124,111,255,.2);border-color:var(--accent);color:var(--accent)}
 
 /* -- Word detail panel (slide in) -- */
 .wd-panel{
@@ -716,8 +728,12 @@ audio{width:100%;accent-color:var(--accent)}
     </select>
     <button class="btn btn-g btn-sm" onclick="exportVocabJSON()" title="Xuất danh sách từ vựng">⬇ Xuất</button>
     <label class="btn btn-g btn-sm" title="Nhập danh sách từ vựng" style="cursor:pointer">⬆ Nhập<input type="file" accept=".json" style="display:none" onchange="importVocabJSON(this)"></label>
+    <button class="btn btn-s btn-sm" onclick="openTopicModal()" title="Nhập từ vựng theo chủ đề" style="white-space:nowrap">📚 Chủ đề</button>
     <button class="btn btn-g btn-sm" onclick="clearAllVocab()" style="white-space:nowrap;color:var(--err)">🗑 Xóa tất cả</button>
   </div>
+
+  <!-- Topic filter row (rendered dynamically) -->
+  <div id="vtTopicRow" class="vt-topic-row" style="padding:0 0 4px"></div>
 
   <div class="vt-stats">
     <div class="vt-stat">Tổng: <strong id="vtStatTotal">0</strong> từ</div>
@@ -734,6 +750,7 @@ audio{width:100%;accent-color:var(--accent)}
           <th style="width:100px">LOẠI TỪ</th>
           <th>NGHĨA</th>
           <th>VÍ DỤ</th>
+          <th style="width:90px;text-align:center">CHỦ ĐỀ</th>
           <th style="width:80px;text-align:center">ĐÃ HỌC</th>
         </tr>
       </thead>
@@ -746,6 +763,38 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
   </div>
 </section>
+
+<!-- Topic import modal -->
+<div class="topic-modal-bg" id="topicModalBg" onclick="if(event.target===this)closeTopicModal()">
+  <div class="topic-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:17px;font-weight:700">📚 Nhập từ vựng theo chủ đề</div>
+      <button onclick="closeTopicModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Tên chủ đề <span style="color:var(--muted);font-weight:400">(tùy chọn)</span></label>
+      <input id="topicNameInput" class="if" placeholder="VD: Động vật, Công nghệ, Du lịch...">
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Danh sách từ <span style="color:var(--muted);font-weight:400">(mỗi từ một dòng)</span></label>
+      <textarea id="topicWordList" class="if" rows="10" placeholder="cat&#10;dog&#10;elephant&#10;computer&#10;..." style="resize:vertical;font-family:monospace;font-size:13px"></textarea>
+    </div>
+    <div id="topicProgress" style="display:none;margin-bottom:14px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px" id="topicProgressText">Đang xử lý...</div>
+      <div style="height:6px;background:var(--border);border-radius:3px">
+        <div id="topicProgressBar" style="height:100%;background:var(--ok);border-radius:3px;transition:width .3s;width:0%"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <button class="btn btn-s" id="topicLookupBtn" onclick="startTopicImport(true)" style="flex:1">🔍 Tra từ & Nhập</button>
+      <button class="btn btn-g" id="topicFastBtn" onclick="startTopicImport(false)" style="flex:1">⚡ Nhập nhanh</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;background:var(--s2);border-radius:var(--rs);padding:10px 12px">
+      <strong style="color:var(--text)">🔍 Tra từ &amp; Nhập</strong> — tự động tra nghĩa từng từ (mất thêm vài giây)<br>
+      <strong style="color:var(--text)">⚡ Nhập nhanh</strong> — thêm ngay, click vào từ để tra nghĩa sau
+    </div>
+  </div>
+</div>
 
 <!-- Word detail panel -->
 <div class="wd-overlay" id="wdOverlay" onclick="closeWordPanel()"></div>
@@ -1619,12 +1668,16 @@ function parseFreeDict(entries) {
 }
 
 // ── Vocab table ──
-let _vtFilterActive = 'all', _vtDebounce = null;
+let _vtFilterActive = 'all', _vtDebounce = null, _vtTopicFilter = '';
 
 function setVtFilter(f, el) {
   _vtFilterActive = f;
   document.querySelectorAll('.vt-chip').forEach(c => c.classList.remove('on'));
   el.classList.add('on');
+  renderVocabTable();
+}
+function setVtTopicFilter(t, el) {
+  _vtTopicFilter = t;
   renderVocabTable();
 }
 
@@ -1644,6 +1697,20 @@ function renderVocabTable() {
   const empty = document.getElementById('vtEmpty');
   updateQuizStartBtn();
 
+  // Render topic filter chips
+  const topicRow = document.getElementById('vtTopicRow');
+  const allTopics = [...new Set(vocabList.map(v=>v.topic||'').filter(Boolean))].sort();
+  if(topicRow) {
+    if(allTopics.length) {
+      topicRow.innerHTML = `<div class="topic-chip${_vtTopicFilter===''?' on':''}" onclick="setVtTopicFilter('',this)">Tất cả</div>` +
+        allTopics.map(t=>`<div class="topic-chip${_vtTopicFilter===t?' on':''}" data-t="${esc(t)}" onclick="setVtTopicFilter(this.dataset.t,this)">${esc(t)}</div>`).join('');
+      topicRow.style.display = '';
+    } else {
+      topicRow.innerHTML = '';
+      topicRow.style.display = 'none';
+    }
+  }
+
   let filtered = vocabList.filter(v => {
     if(search) {
       const wordMatch = v.word.toLowerCase().includes(search);
@@ -1655,6 +1722,9 @@ function renderVocabTable() {
     if(_vtFilterActive !== 'all') {
       const hasPOS = Object.keys(v.meanings || {}).includes(_vtFilterActive);
       if(!hasPOS) return false;
+    }
+    if(_vtTopicFilter !== '') {
+      if((v.topic||'') !== _vtTopicFilter) return false;
     }
     return true;
   });
@@ -1711,6 +1781,7 @@ function renderVocabTable() {
         <div class="vt-en">${esc(enText)}</div>
       </td>
       <td><div class="vt-ex">${esc(example)}</div></td>
+      <td style="text-align:center">${v.topic?`<span class="topic-badge" title="${esc(v.topic)}">${esc(v.topic)}</span>`:'<span style="color:var(--muted);font-size:12px">–</span>'}</td>
       <td style="text-align:center" onclick="event.stopPropagation()">
         <label class="vt-toggle">
           <input type="checkbox" ${v.learned?'checked':''} data-word="${wordSafe}" onchange="toggleLearned(this.dataset.word,this.checked)">
@@ -1772,6 +1843,99 @@ function importVocabJSON(input) {
     input.value = '';
   };
   reader.readAsText(file);
+}
+
+// ── Topic import ──
+let _topicImporting = false;
+function openTopicModal() {
+  document.getElementById('topicModalBg').classList.add('open');
+  document.getElementById('topicNameInput').focus();
+}
+function closeTopicModal() {
+  if(_topicImporting) return;
+  document.getElementById('topicModalBg').classList.remove('open');
+}
+async function startTopicImport(withLookup) {
+  if(_topicImporting) return;
+  const topic = document.getElementById('topicNameInput').value.trim();
+  const raw = document.getElementById('topicWordList').value;
+  const words = [...new Set(raw.split('\n').map(w=>w.trim().toLowerCase()).filter(w=>w.length>=2 && /[a-z]/.test(w)))];
+  if(!words.length){ showToast('Nhập ít nhất 1 từ','e'); return; }
+
+  const progress = document.getElementById('topicProgress');
+  const progText = document.getElementById('topicProgressText');
+  const progBar  = document.getElementById('topicProgressBar');
+  const lookupBtn = document.getElementById('topicLookupBtn');
+  const fastBtn   = document.getElementById('topicFastBtn');
+
+  _topicImporting = true;
+  lookupBtn.disabled = fastBtn.disabled = true;
+  progress.style.display = 'block';
+
+  const existing = new Set(vocabList.map(v=>v.word));
+  const toAdd = words.filter(w => !existing.has(w));
+  let added = 0;
+
+  if(!withLookup) {
+    // Fast add: bare entries, meanings empty
+    toAdd.forEach(w => {
+      vocabList.push({word:w, ipa:'', audioUrl:'', example:'', meanings:{}, viMeanings:{}, learned:false, addedAt:Date.now(), topic:topic||undefined});
+    });
+    localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
+    added = toAdd.length;
+    progText.textContent = `✅ Đã thêm ${added} từ`;
+    progBar.style.width = '100%';
+  } else {
+    // Lookup each word
+    for(let i=0; i<toAdd.length; i++) {
+      const w = toAdd[i];
+      progText.textContent = `Đang tra (${i+1}/${toAdd.length}): ${w}`;
+      progBar.style.width = Math.round((i+1)/toAdd.length*100) + '%';
+      try {
+        const dictData = await apiFreeDict(w);
+        if(dictData) {
+          const parsed = parseFreeDict(dictData);
+          const meanings={}, viMeanings={};
+          for(const [pos,defs] of Object.entries(parsed.posGroups||{})) {
+            meanings[pos]=defs.map(d=>d.def);
+            viMeanings[pos]=defs.map(()=>'…');
+          }
+          const entry={word:w,ipa:parsed.ipa||'',audioUrl:parsed.audioUrl||'',example:parsed.example||'',meanings,viMeanings,learned:false,addedAt:Date.now(),topic:topic||undefined};
+          vocabList = vocabList.filter(v=>v.word!==w);
+          vocabList.push(entry);
+          // Translate async in background
+          (async()=>{
+            for(const [pos,defs] of Object.entries(parsed.posGroups||{})){
+              const t=[];
+              for(const d of defs) t.push(await apiTranslateOne(d.def));
+              const idx=vocabList.findIndex(v=>v.word===w);
+              if(idx>=0){ vocabList[idx].viMeanings[pos]=t; localStorage.setItem(lsk('eh_vocab'),JSON.stringify(vocabList)); }
+            }
+          })();
+          added++;
+        }
+      } catch(e) {
+        // Word not found in dictionary — add bare entry
+        vocabList.push({word:w,ipa:'',audioUrl:'',example:'',meanings:{},viMeanings:{},learned:false,addedAt:Date.now(),topic:topic||undefined});
+        added++;
+      }
+      localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
+      await new Promise(r=>setTimeout(r,300)); // small delay to avoid rate limits
+    }
+    progText.textContent = `✅ Đã nhập ${added} từ${words.length-toAdd.length?' ('+((words.length-toAdd.length))+' từ đã có)':''}`;
+  }
+
+  renderVocabTable(); renderHome();
+  showToast(`📚 Nhập xong ${added} từ${topic?' – '+topic:''}`);
+
+  setTimeout(()=>{
+    _topicImporting = false;
+    lookupBtn.disabled = fastBtn.disabled = false;
+    progress.style.display = 'none';
+    progBar.style.width = '0%';
+    document.getElementById('topicWordList').value = '';
+    document.getElementById('topicModalBg').classList.remove('open');
+  }, 1500);
 }
 
 // ── Word detail panel ──
@@ -1852,7 +2016,11 @@ function renderWordPanelContent(entry) {
       <div class="wd-section-title">Collocations <span style="font-size:9px;color:var(--muted);font-weight:400">(Datamuse)</span></div>
       <div id="wdColloc" class="colloc-row"><span style="color:var(--muted);font-size:13px">Đang tải...</span></div>
     </div>
-    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap">
+    <div style="margin-top:16px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap">Chủ đề:</span>
+      <input id="wdTopicInput" class="if" value="${esc(entry.topic||'')}" placeholder="Không có" style="font-size:12.5px;padding:6px 10px;flex:1" onchange="saveWordTopic(this.value)">
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-g btn-sm" data-word="${esc(entry.word)}" onclick="toggleLearnedFromPanel(this.dataset.word)" id="wdLearnBtn">${entry.learned?'📚 Đánh dấu chưa học':'✅ Đánh dấu đã học'}</button>
       <button class="btn btn-g btn-sm" style="color:var(--err)" data-word="${esc(entry.word)}" onclick="deleteVocab(this.dataset.word)">🗑 Xóa</button>
     </div>`;
@@ -1917,6 +2085,15 @@ function closeWordPanel() {
 
 function saveWord() { /* kept for compat */ }
 function saveWordFromPanel() { /* already saved */ }
+function saveWordTopic(topic) {
+  const word = document.getElementById('wdWord')?.textContent?.trim();
+  if(!word) return;
+  const idx = vocabList.findIndex(v=>v.word===word);
+  if(idx<0) return;
+  vocabList[idx].topic = topic.trim() || undefined;
+  localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
+  renderVocabTable();
+}
 function clearVocab(){document.getElementById('vocabInput').value='';}
 
 function copyWordToClipboard() {
