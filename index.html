@@ -2877,7 +2877,7 @@ function renderLessonForm(l) {
         <!-- Step 2: settings -->
         <div style="background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:16px">
           <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--a4)">Bước 2 — Cài đặt câu hỏi</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
             <div>
               <div class="flabel">Số câu điền chỗ trống</div>
               <select id="ai_fib_count" class="if">
@@ -2896,6 +2896,10 @@ function renderLessonForm(l) {
                 <option>Beginner</option><option selected>Intermediate</option><option>Advanced</option>
               </select>
             </div>
+          </div>
+          <div>
+            <div class="flabel" style="display:flex;align-items:center;gap:6px">Anthropic API Key <span style="font-size:10px;color:var(--muted);font-weight:400">(tuỳ chọn — không có thì dùng auto-parser)</span></div>
+            <input id="ai_api_key" class="if" type="password" placeholder="sk-ant-api03-..." style="font-family:monospace;font-size:12px" oninput="if(this.value.startsWith('sk-'))localStorage.setItem('ai_api_key_cached',this.value)">
           </div>
         </div>
 
@@ -3009,6 +3013,11 @@ function switchLessonTab(tab) {
     btn.style.background = active ? 'var(--accent)' : 'var(--s2)';
     btn.style.color      = active ? '#fff' : 'var(--muted)';
   });
+  // Pre-fill cached API key when switching to AI tab
+  if(tab==='ai') {
+    const inp = document.getElementById('ai_api_key');
+    if(inp && !inp.value) inp.value = localStorage.getItem('ai_api_key_cached') || '';
+  }
 }
 
 let _aiSrc = 'transcript';
@@ -3075,6 +3084,10 @@ async function generateAiQuestions() {
   const fibCount = document.getElementById('ai_fib_count').value;
   const mcCount  = document.getElementById('ai_mc_count').value;
   const level    = document.getElementById('ai_level').value;
+  const apiKey   = (document.getElementById('ai_api_key')?.value.trim()) || localStorage.getItem('ai_api_key_cached') || '';
+  // Pre-fill cached key
+  if(apiKey && document.getElementById('ai_api_key') && !document.getElementById('ai_api_key').value)
+    document.getElementById('ai_api_key').value = apiKey;
 
   // Get transcript
   let transcript = '';
@@ -3084,6 +3097,16 @@ async function generateAiQuestions() {
     transcript = document.getElementById('ai_yt_transcript').value.trim();
   }
   if(!transcript){ showToast('Cần có transcript trước','e'); return; }
+  if(!apiKey) {
+    // No API key — use local fallback immediately, don't attempt API
+    _aiGeneratedData = fallbackGenerateQuestions(transcript, parseInt(fibCount), parseInt(mcCount));
+    _aiGeneratedData._transcript = transcript;
+    renderAiPreview(_aiGeneratedData);
+    document.getElementById('ai_gen_status').style.display='none';
+    document.getElementById('ai_preview').style.display='block';
+    showToast('Auto-parser (không có API key)');
+    return;
+  }
 
   document.getElementById('ai_gen_status').style.display='block';
   document.getElementById('ai_preview').style.display='none';
@@ -3117,9 +3140,14 @@ Trả về JSON THUẦN (không có markdown, không có backtick):
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1500,
         messages: [{role:'user', content: prompt}]
       })
@@ -3252,6 +3280,8 @@ function saveLessonForm() {
   const name = document.getElementById('lf_name').value.trim();
   const key  = (document.getElementById('lf_key').value.trim()||'').replace(/\s+/g,'_');
   if(!name||!key){ showToast('Cần nhập tên và key','e'); return; }
+  const _isEdit = document.getElementById('lessonModalTitle')?.textContent.startsWith('✏️');
+  if(!_isEdit && LESSONS[key] && !confirm(`Key "${key}" đã tồn tại (bài "${LESSONS[key].name}"). Ghi đè?`)) return;
 
   // Collect FIB questions
   const fibDivs = document.querySelectorAll('#lf_fibs>[id^=fib_row]');
@@ -3763,11 +3793,12 @@ function extractFIBv2(sections, allLines, answerKey, limit) {
     let answer = answerKey[qNum] || '';
 
     // Thử tìm đáp án inline: từ trong ngoặc ngay sau ___
-    // VD: "She ___ (drink) coffee"
+    // VD: "She ___ (drink/drank/drunk) coffee"
     if(!answer){
       const inlineMatch = text.match(/___\s*\(([^)]+)\)/);
       if(inlineMatch){
-        answer = inlineMatch[1].toLowerCase().trim();
+        // Take first alternative if slash-separated
+        answer = inlineMatch[1].split('/')[0].toLowerCase().trim();
         text = text.replace(/\s*\([^)]+\)/, ''); // bỏ gợi ý
       }
     }
@@ -3949,6 +3980,7 @@ function saveUploadLesson() {
   const name = document.getElementById('up_name').value.trim();
   const key  = document.getElementById('up_key').value.trim().replace(/\s+/g,'_');
   if(!name||!key){ showToast('Cần nhập tên và key','e'); return; }
+  if(LESSONS[key] && !confirm(`Key "${key}" đã tồn tại (bài "${LESSONS[key].name}"). Ghi đè?`)) return;
 
   const media = getUpMediaValue();
   const isYt  = media.includes('youtube')||media.includes('youtu.be');
@@ -4031,7 +4063,7 @@ function renderLessonTabs(){ renderLessonTable(); }
 function selectLesson(key){
   document.querySelectorAll('.lesson-tab').forEach(t=>t.classList.remove('active'));
   const el=document.getElementById('lt-'+key); if(el)el.classList.add('active');
-  listenDone=false; qMode='fib';
+  listenDone=false; _listenSubmitting=false; qMode='fib';
   _matchCorrect=0; _matchSelected=null; _matchPairs=[];
   curLesson={key,...LESSONS[key]};
   const l=curLesson;
@@ -4044,7 +4076,7 @@ function selectLesson(key){
   document.getElementById('lMediaTitle').textContent=(l.youtube?'🎬':'🎧')+' '+l.name;
   const mb=document.getElementById('lMediaBody');
   if(l.youtube){
-    mb.innerHTML=`<iframe class="yt-embed" src="https://www.youtube.com/embed/${getYtId(l.youtube)}?rel=0" allowfullscreen></iframe>`;
+    mb.innerHTML=`<iframe class="yt-embed" src="https://www.youtube-nocookie.com/embed/${getYtId(l.youtube)}?rel=0&enablejsapi=1" title="${esc(l.name)}" loading="lazy" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe>`;
   } else if(l.audio){
     mb.innerHTML=`<audio controls src="${l.audio}"></audio>`;
   } else {
@@ -4121,10 +4153,13 @@ function selMC(qi,oi){
   document.querySelectorAll(`[id^="mco${qi}_"]`).forEach(e=>e.classList.remove('sel'));
   document.getElementById(`mco${qi}_${oi}`).classList.add('sel');
 }
+let _listenSubmitting = false;
 async function submitListen(){
   if(!curLesson)return;
+  if(listenDone || _listenSubmitting) return;
   const qs = qMode==='fib' ? (curLesson.questions||[]) : (curLesson.mcQuestions||[]);
   if(!qs.length){ showToast('Bài này chưa có câu hỏi','e'); return; }
+  _listenSubmitting = true;
   listenDone=true;
   let score=0,total=0;
   if(qMode==='fib'){
@@ -4163,6 +4198,7 @@ async function submitListen(){
   if(scores.length > 2000) scores.splice(0, scores.length - 2000);
   localStorage.setItem(lsk('eh_scores'),JSON.stringify(scores));
   try{await fetch(GS_URL,{method:'POST',body:JSON.stringify({...entry,lesson:curLesson.key})});}catch(e){}
+  _listenSubmitting = false;
 }
 function toggleTranscript(){document.getElementById('transcriptCard').classList.toggle('show');}
 function getYtId(url){const m=url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);return m?m[1]:url;}
@@ -4272,15 +4308,15 @@ function convertDriveAudioLink(url) {
   if(!url.trim()){ result.textContent=''; document.getElementById('up_media').value=''; return; }
   const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)||url.match(/id=([a-zA-Z0-9_-]+)/);
   if(!m){ result.innerHTML='<span style="color:var(--err)">⚠️ Không nhận ra link Drive</span>'; return; }
-  const directUrl = `https://drive.google.com/uc?export=download&id=${m[1]}`;
-  // Drive audio thường bị chặn CORS khi stream trực tiếp
-  // Dùng proxy hoặc embed
-  const embedUrl = `https://drive.google.com/file/d/${m[1]}/preview`;
+  const fileId = m[1];
+  // Use open export which follows redirects better than download
+  const directUrl = `https://drive.google.com/uc?export=open&id=${fileId}`;
   document.getElementById('up_media').value = directUrl;
-  result.innerHTML = `<span style="color:var(--ok)">✅ ID: ${m[1]}</span>
-    <div style="margin-top:8px;font-size:12px;color:var(--muted)">
-      ⚠️ Drive audio có thể bị chặn CORS khi phát trực tiếp trong app.<br>
-      <strong>Khuyến nghị:</strong> dùng YouTube Unlisted hoặc upload MP3 lên Netlify để đảm bảo hoạt động.
+  result.innerHTML = `<span style="color:var(--ok)">✅ ID: ${esc(fileId)}</span>
+    <div style="margin-top:8px;font-size:12px;color:var(--warn);background:rgba(255,209,102,.07);border:1px solid rgba(255,209,102,.2);border-radius:6px;padding:8px 10px">
+      ⚠️ Drive audio hay bị chặn CORS. Nếu không nghe được, hãy:<br>
+      • Upload MP3 lên hosting (Netlify, Cloudinary…) và dùng link trực tiếp<br>
+      • Hoặc dùng YouTube Unlisted (ổn định nhất)
     </div>`;
 }
 
