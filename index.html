@@ -3540,7 +3540,7 @@ async function extractPdfText(file) {
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:ab}).promise;
   let text = '';
-  const maxPages = Math.min(pdf.numPages, 10); // tối đa 10 trang
+  const maxPages = Math.min(pdf.numPages, 30); // tối đa 30 trang
   for(let i=1;i<=maxPages;i++){
     setUploadProgress(15+Math.round(i/maxPages*40), `Đang đọc trang ${i}/${maxPages}...`,'');
     const page = await pdf.getPage(i);
