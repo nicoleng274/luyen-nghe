@@ -1260,6 +1260,8 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 //  PROFILE SYSTEM
 // ═══════════════════════════════════════════
 let _profile = localStorage.getItem('eh_current_profile') || 'default';
+// Validate stored profile exists; reset to default if not
+(function(){ const list = JSON.parse(localStorage.getItem('eh_profiles')||'["default"]'); if(!list.includes(_profile)){ _profile='default'; localStorage.setItem('eh_current_profile','default'); } })();
 function lsk(k) { return _profile === 'default' ? k : _profile + '_' + k; }
 function _lsJSON2(k, fallback) { try { return JSON.parse(localStorage.getItem(lsk(k))||'null') ?? fallback; } catch { return fallback; } }
 
@@ -1319,6 +1321,21 @@ function deleteProfile(name) {
   if(!confirm('Xóa tài khoản "' + name + '"? Dữ liệu học sẽ bị mất!')) return;
   const list = getProfileList().filter(p => p !== name);
   localStorage.setItem('eh_profiles', JSON.stringify(list));
+  // Clean up all namespaced keys for this profile
+  const prefix = name + '_';
+  Object.keys(localStorage).forEach(k => {
+    if(k.startsWith(prefix)) localStorage.removeItem(k);
+  });
+  if(_profile === name) {
+    _profile = 'default';
+    localStorage.setItem('eh_current_profile', 'default');
+    vocabList  = _lsJSON2('eh_vocab', []);
+    phraseList = _lsJSON2('eh_phrases', []);
+    scores     = _lsJSON2('eh_scores', []);
+    rWords     = _lsJSON2('eh_rwords', []);
+    activity   = _lsJSON2('eh_act', []);
+    renderHome(); renderVocabTable(); renderPhraseTable(); renderScores();
+  }
   openProfileModal();
 }
 
@@ -1433,12 +1450,21 @@ function sp(id) {
 // ═══════════════════════════════════════════
 //  HOME
 // ═══════════════════════════════════════════
+function dateToISO(d) {
+  // Convert vi-VN format (dd/mm/yyyy) or ISO (yyyy-mm-dd) to yyyy-mm-dd
+  if(!d) return '';
+  if(/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0,10);
+  const p = d.split('/');
+  if(p.length===3) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+  return d;
+}
 function calcStreak() {
-  const daySet = new Set(scores.map(s=>s.date));
+  const daySet = new Set(scores.map(s=>dateToISO(s.date)));
   let streak=0;
   for(let i=0;i<365;i++){
     const d=new Date(); d.setDate(d.getDate()-i);
-    if(daySet.has(d.toLocaleDateString('vi-VN'))) streak++;
+    const iso=d.toISOString().slice(0,10);
+    if(daySet.has(iso)) streak++;
     else if(i>0) break;
   }
   return streak;
@@ -1708,11 +1734,17 @@ function clearAllVocab() {
 }
 function exportVocabJSON() {
   if(!vocabList.length){ showToast('Chưa có từ vựng để xuất','e'); return; }
-  const data = {version:1, profile:_profile, exported:new Date().toISOString(), words:vocabList};
+  // Collect SR data for all vocab words
+  const srData = {};
+  vocabList.forEach(v => {
+    const sr = localStorage.getItem(lsk('sr_'+v.word));
+    if(sr) srData[v.word] = JSON.parse(sr);
+  });
+  const data = {version:2, profile:_profile, exported:new Date().toISOString(), words:vocabList, sr:srData};
   const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `vocab_${_profile}_${new Date().toLocaleDateString('vi-VN').replace(/\//g,'-')}.json`;
+  a.download = `vocab_${_profile}_${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(a.href);
   showToast('Đã xuất ' + vocabList.length + ' từ');
 }
@@ -1728,6 +1760,12 @@ function importVocabJSON(input) {
       const added = words.filter(w=>w.word && !existing.has(w.word));
       vocabList.push(...added);
       localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
+      // Restore SR data if present in export
+      if(data.sr && typeof data.sr === 'object') {
+        added.forEach(w => {
+          if(data.sr[w.word]) localStorage.setItem(lsk('sr_'+w.word), JSON.stringify(data.sr[w.word]));
+        });
+      }
       renderVocabTable(); renderHome();
       showToast('Đã nhập ' + added.length + ' từ mới');
     } catch { showToast('File không hợp lệ','e'); }
@@ -4193,7 +4231,7 @@ async function submitListen(){
   const name=document.getElementById('lName').value,cls=document.getElementById('lClass').value;
   showToast(`🎉 ${score}/${total} (${pct}%)`);
   addAct('🎧','rgba(255,209,102,.2)',`Luyện nghe: ${esc(name||'HS')} – ${score}/${total}`);
-  const entry={student:name||'Ẩn danh',class:cls||'–',lesson:curLesson.name,score,total,date:new Date().toLocaleDateString('vi-VN'),time:new Date().toLocaleTimeString('vi-VN')};
+  const entry={student:name||'Ẩn danh',class:cls||'–',lesson:curLesson.name,score,total,date:new Date().toISOString().slice(0,10),time:new Date().toLocaleTimeString('vi-VN')};
   scores.push(entry);
   if(scores.length > 2000) scores.splice(0, scores.length - 2000);
   localStorage.setItem(lsk('eh_scores'),JSON.stringify(scores));
@@ -4855,7 +4893,7 @@ async function saveQuizScore(score, total) {
     class:   document.getElementById('qClass').value||'–',
     lesson:  `Quiz ${Q_MODE_LABELS[_quizMode]}`,
     score, total, duration,
-    date: new Date().toLocaleDateString('vi-VN'),
+    date: new Date().toISOString().slice(0,10),
     time: new Date().toLocaleTimeString('vi-VN')
   };
   scores.push(entry);
@@ -5112,6 +5150,7 @@ function getFilteredScores() {
 function exportScoresCSV() {
   const data = getFilteredScores();
   if(!data.length){showToast('Không có dữ liệu để xuất','e');return;}
+  const isFiltered = data.length < scores.length;
   const header=['Học sinh','Lớp','Bài','Điểm','Tổng','Tỉ lệ','Thời gian','Ngày','Giờ'];
   const rows=data.map(s=>[s.student,s.class,s.lesson,s.score,s.total,
     Math.round(s.score/s.total*100)+'%',s.duration||'–',s.date,s.time]);
@@ -5119,14 +5158,16 @@ function exportScoresCSV() {
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=`englishhub_scores_${new Date().toISOString().slice(0,10)}.csv`;
+  const suffix = isFiltered ? '_filtered' : '';
+  a.href=url;a.download=`englishhub_scores${suffix}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();URL.revokeObjectURL(url);
-  showToast('✅ Đã xuất CSV');
+  showToast(isFiltered ? `✅ Đã xuất ${data.length}/${scores.length} kết quả (đã lọc)` : '✅ Đã xuất CSV');
 }
 
 function exportScoresXLS() {
   const data = getFilteredScores();
   if(!data.length){showToast('Không có dữ liệu để xuất','e');return;}
+  const isFiltered = data.length < scores.length;
   const header=['Học sinh','Lớp','Bài','Điểm','Tổng','Tỉ lệ','Thời gian','Ngày','Giờ'];
   const rows=data.map(s=>[s.student,s.class,s.lesson,s.score,s.total,
     Math.round(s.score/s.total*100)+'%',s.duration||'–',s.date,s.time]);
@@ -5144,9 +5185,10 @@ function exportScoresXLS() {
   const blob=new Blob([xlsHtml],{type:'application/vnd.ms-excel;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=`englishhub_scores_${new Date().toISOString().slice(0,10)}.xls`;
+  const suffix = isFiltered ? '_filtered' : '';
+  a.href=url;a.download=`englishhub_scores${suffix}_${new Date().toISOString().slice(0,10)}.xls`;
   a.click();URL.revokeObjectURL(url);
-  showToast('✅ Đã xuất Excel (.xls)');
+  showToast(isFiltered ? `✅ Đã xuất ${data.length}/${scores.length} kết quả (đã lọc)` : '✅ Đã xuất Excel (.xls)');
 }
 
 function clearScores(){
@@ -5196,11 +5238,18 @@ function toggleTheme(){
 // ═══════════════════════════════════════════
 //  GLOBAL SEARCH
 // ═══════════════════════════════════════════
+let _gsDebounce;
 function globalSearch(q){
   const inp = document.getElementById('gsInput');
   const clearBtn = document.getElementById('gsClearBtn');
   const res = document.getElementById('gsResults');
   if(clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+  if(!q||q.trim().length<1){ res.classList.remove('open'); clearTimeout(_gsDebounce); return; }
+  clearTimeout(_gsDebounce);
+  _gsDebounce = setTimeout(()=>_globalSearchExec(q), 150);
+}
+function _globalSearchExec(q){
+  const res = document.getElementById('gsResults');
   if(!q||q.trim().length<1){ res.classList.remove('open'); return; }
   const kw = q.trim().toLowerCase();
   const sections = [];
