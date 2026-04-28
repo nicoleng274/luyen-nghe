@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EnglishHub – Luyện Tiếng Anh</title>
+<title>Viva Lingo</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -632,8 +632,7 @@ html[data-theme="light"] code{background:var(--s3);color:var(--text)}
 
 <aside class="sidebar" id="sidebar">
   <div class="logo">
-    <div class="logo-name">EnglishHub</div>
-    <div class="logo-sub">Luyện Tiếng Anh Pro</div>
+    <div class="logo-name">Viva Lingo</div>
   </div>
   <!-- Global Search -->
   <div class="gs-wrap">
@@ -656,7 +655,7 @@ html[data-theme="light"] code{background:var(--s3);color:var(--text)}
     <button id="profileBtn" onclick="openProfileModal()" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left">👤 default</button>
   </div>
   <div class="sf" style="display:flex;align-items:center;justify-content:space-between">
-    <span>EnglishHub v2.3</span>
+    <span>Viva Lingo v2.3</span>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️ Sáng</button>
   </div>
 </aside>
@@ -2247,9 +2246,12 @@ function renderTopicsPage() {
       </div>
     </div>`;
   } else {
-    header.innerHTML = `<div style="margin-bottom:20px">
-      <div style="font-size:20px;font-weight:800">📚 Từ vựng theo chủ đề</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:4px">Chọn chủ đề để bắt đầu học</div>
+    header.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px">
+      <div>
+        <div style="font-size:20px;font-weight:800">📚 Từ vựng theo chủ đề</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">Chọn chủ đề để bắt đầu học</div>
+      </div>
+      <button onclick="verifyAdmin()" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:var(--rs);padding:6px 10px;font-size:13px;cursor:pointer;white-space:nowrap;transition:.2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">⚙️ Quản trị</button>
     </div>`;
   }
 
@@ -6026,8 +6028,29 @@ renderLessonTable();
 })();
 
 function applyTheme(t){
-  document.documentElement.setAttribute('data-theme', t);
-  document.documentElement.classList.toggle('light-mode', t==='light');
+  const el = document.documentElement;
+  el.setAttribute('data-theme', t);
+  el.classList.toggle('light-mode', t==='light');
+  if(t==='light'){
+    el.style.setProperty('--bg','#f0f2f7');
+    el.style.setProperty('--surface','#ffffff');
+    el.style.setProperty('--s2','#f0f2f7');
+    el.style.setProperty('--s3','#e4e7f0');
+    el.style.setProperty('--border','#d0d4e8');
+    el.style.setProperty('--accent','#5a4fd8');
+    el.style.setProperty('--a2','#e84060');
+    el.style.setProperty('--a3','#22b588');
+    el.style.setProperty('--a4','#c98a00');
+    el.style.setProperty('--text','#1a1a2e');
+    el.style.setProperty('--muted','#5a5a7a');
+    el.style.setProperty('--card','#ffffff');
+    el.style.setProperty('--ok','#22b588');
+    el.style.setProperty('--err','#e84060');
+    el.style.setProperty('--warn','#c98a00');
+  } else {
+    ['--bg','--surface','--s2','--s3','--border','--accent','--a2','--a3','--a4',
+     '--text','--muted','--card','--ok','--err','--warn'].forEach(v=>el.style.removeProperty(v));
+  }
   const btn = document.getElementById('themeBtn');
   if(btn) btn.textContent = t==='dark' ? '☀️ Sáng' : '🌙 Tối';
   localStorage.setItem('eh_theme', t);
