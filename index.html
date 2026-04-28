@@ -495,20 +495,52 @@ audio{width:100%;accent-color:var(--accent)}
 .ap-loop-btn.active{background:rgba(61,219,165,.15);border-color:var(--ok);color:var(--ok)}
 
 /* ══ LIGHT THEME ══ */
-[data-theme="light"]{
-  --bg:#f0f2f7;--surface:#ffffff;--s2:#f5f6fa;--s3:#ebedf5;
-  --border:#d0d4e8;--accent:#5a4fd8;--a2:#e84060;--a3:#22b588;--a4:#e8a800;
-  --text:#1a1a2e;--muted:#6b6b8a;--card:#ffffff;
-  --ok:#22b588;--err:#e84060;--warn:#e8a800;
+html[data-theme="light"]{
+  --bg:#f0f2f7;--surface:#ffffff;--s2:#f5f6fa;--s3:#e8eaf2;
+  --border:#d0d4e8;--accent:#5a4fd8;--a2:#e84060;--a3:#22b588;--a4:#c98a00;
+  --text:#1a1a2e;--muted:#5a5a7a;--card:#ffffff;
+  --ok:#22b588;--err:#e84060;--warn:#c98a00;
+  --r:12px;--rs:8px;
 }
-[data-theme="light"] body{background:var(--bg)}
-[data-theme="light"] .sidebar{box-shadow:2px 0 12px rgba(0,0,0,.06)}
-[data-theme="light"] .vt-table-wrap{border:1px solid var(--border);border-radius:var(--r)}
-[data-theme="light"] .stbl th{background:var(--s2)}
-[data-theme="light"] ::-webkit-scrollbar-thumb{background:#c0c4d8}
-[data-theme="light"] .vt-toggle-track{background:rgba(0,0,0,.18);border-color:rgba(0,0,0,.25)}
-[data-theme="light"] .topic-chip{background:var(--s3);color:var(--muted)}
-[data-theme="light"] .topic-modal{background:var(--surface)}
+html[data-theme="light"] body{background:var(--bg);color:var(--text)}
+html[data-theme="light"] .sidebar{background:var(--surface);box-shadow:2px 0 16px rgba(0,0,0,.08)}
+html[data-theme="light"] .card{background:var(--card);border-color:var(--border)}
+html[data-theme="light"] .if{background:var(--s2);border-color:var(--border);color:var(--text)}
+html[data-theme="light"] .if::placeholder{color:var(--muted)}
+html[data-theme="light"] .ni{color:var(--text)}
+html[data-theme="light"] .ni:hover,.ni.active{background:var(--s2);color:var(--accent)}
+html[data-theme="light"] .gs-input{background:var(--s2);border-color:var(--border);color:var(--text)}
+html[data-theme="light"] .gs-results{background:var(--surface);border-color:var(--border)}
+html[data-theme="light"] .gs-result-item:hover{background:var(--s2)}
+html[data-theme="light"] .vt-table-wrap{border-color:var(--border)}
+html[data-theme="light"] .vt-table thead th{background:var(--s2);color:var(--muted)}
+html[data-theme="light"] .vt-row td{border-color:var(--border)}
+html[data-theme="light"] .vt-row:hover td{background:rgba(90,79,216,.05)}
+html[data-theme="light"] .vt-chip{background:var(--s3);border-color:var(--border);color:var(--muted)}
+html[data-theme="light"] .vt-chip.on{background:rgba(90,79,216,.12);border-color:var(--accent);color:var(--accent)}
+html[data-theme="light"] .ph{background:transparent}
+html[data-theme="light"] .btn-g{background:var(--s2);border-color:var(--border);color:var(--text)}
+html[data-theme="light"] .btn-g:hover{border-color:var(--accent);color:var(--accent)}
+html[data-theme="light"] .stbl th{background:var(--s2);color:var(--muted)}
+html[data-theme="light"] .stbl td{border-color:var(--border)}
+html[data-theme="light"] .act-item{border-color:var(--border)}
+html[data-theme="light"] .toast{background:var(--surface);color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,.15)}
+html[data-theme="light"] .wd-panel{background:var(--surface);border-color:var(--border)}
+html[data-theme="light"] .wd-hdr{background:var(--s2);border-color:var(--border)}
+html[data-theme="light"] .wd-section{border-color:var(--border)}
+html[data-theme="light"] .chip{background:var(--s2);border-color:var(--border);color:var(--text)}
+html[data-theme="light"] .pos-badge.pb-other{background:rgba(0,0,0,.07);color:var(--muted)}
+html[data-theme="light"] .bottom-nav{background:var(--surface);border-color:var(--border)}
+html[data-theme="light"] .sf{border-color:var(--border);color:var(--muted)}
+html[data-theme="light"] .logo{border-color:var(--border)}
+html[data-theme="light"] .fc-scene{filter:none}
+html[data-theme="light"] .fc-card .fc-front,.fc-card .fc-back{background:var(--card);border:1px solid var(--border)}
+html[data-theme="light"] .sbadge{border:1px solid rgba(0,0,0,.08)}
+html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#c0c4d8}
+html[data-theme="light"] .vt-toggle-track{background:rgba(0,0,0,.18);border-color:rgba(0,0,0,.25)}
+html[data-theme="light"] .topic-chip{background:var(--s3);color:var(--muted)}
+html[data-theme="light"] .topic-modal,.topic-modal-bg.open .topic-modal{background:var(--surface);border-color:var(--border)}
+html[data-theme="light"] code{background:var(--s3);color:var(--text)}
 
 /* ══ GLOBAL SEARCH ══ */
 .gs-wrap{padding:10px 12px;border-bottom:1px solid var(--border);position:relative}
@@ -823,30 +855,12 @@ audio{width:100%;accent-color:var(--accent)}
 
 <!-- TOPICS -->
 <section id="page-topics" class="page">
-  <div class="card" style="margin-bottom:16px">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-      <div>
-        <div style="font-size:19px;font-weight:800">📚 Từ vựng theo chủ đề</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:3px">Quản lý và học từ vựng theo từng chủ đề</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-s btn-sm" onclick="openBulkTopicModal()">⬆ Nhập hàng loạt</button>
-        <button class="btn btn-g btn-sm" onclick="exportAllTopicsJSON()">⬇ Xuất JSON</button>
-      </div>
-    </div>
-    <!-- Import format hint -->
-    <div style="background:var(--s2);border-radius:var(--rs);padding:12px 14px;font-size:12.5px;line-height:1.8;color:var(--muted)">
-      <strong style="color:var(--text)">Nhập hàng loạt</strong> hỗ trợ 2 định dạng:<br>
-      📄 <strong style="color:var(--text)">File JSON:</strong> <code style="background:var(--s3);padding:1px 6px;border-radius:4px;font-size:11.5px">{"Chủ đề 1":["word1","word2"],"Chủ đề 2":["word3"]}</code><br>
-      📝 <strong style="color:var(--text)">File TXT:</strong> dòng <code style="background:var(--s3);padding:1px 6px;border-radius:4px;font-size:11.5px">[Tên chủ đề]</code> rồi liệt kê từ mỗi dòng
-    </div>
-  </div>
-
-  <div id="topicsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px"></div>
+  <div id="topicsHeader"></div>
+  <div id="topicsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px"></div>
   <div id="topicsEmpty" style="display:none;text-align:center;padding:60px 20px;color:var(--muted)">
     <div style="font-size:40px;margin-bottom:12px">📚</div>
     <div style="font-size:15px;font-weight:600;margin-bottom:6px">Chưa có chủ đề nào</div>
-    <div style="font-size:13px">Nhập từ vựng theo chủ đề để bắt đầu</div>
+    <div style="font-size:13px;color:var(--muted)" id="topicsEmptyHint">Liên hệ quản trị viên để được thêm tài liệu</div>
   </div>
 </section>
 
@@ -2208,41 +2222,73 @@ function clearVocab(){document.getElementById('vocabInput').value='';}
 //  TOPICS PAGE
 // ═══════════════════════════════════════════
 function renderTopicsPage() {
-  const grid = document.getElementById('topicsGrid');
-  const empty = document.getElementById('topicsEmpty');
+  const header = document.getElementById('topicsHeader');
+  const grid   = document.getElementById('topicsGrid');
+  const empty  = document.getElementById('topicsEmpty');
   const topics = getTopicsMap();
-  const keys = Object.keys(topics).sort();
+  const keys   = Object.keys(topics).sort();
+  const isAdmin = _adminUnlocked;
+
+  // Header — admin sees management tools, users see clean title
+  if(isAdmin) {
+    header.innerHTML = `<div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+        <div>
+          <div style="font-size:18px;font-weight:800">📚 Quản lý từ vựng theo chủ đề</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:3px">Chế độ quản trị · Người dùng chỉ thấy tên chủ đề và các nút học</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-s btn-sm" onclick="openBulkTopicModal()">⬆ Nhập hàng loạt</button>
+          <button class="btn btn-g btn-sm" onclick="exportAllTopicsJSON()">⬇ Xuất JSON</button>
+        </div>
+      </div>
+      <div style="background:var(--s2);border-radius:var(--rs);padding:10px 13px;font-size:12px;line-height:1.8;color:var(--muted)">
+        📊 Bảng từ vựng (ảnh/PDF/DOCX/CSV/TXT) &nbsp;·&nbsp; 📋 JSON: <code style="background:var(--s3);padding:1px 5px;border-radius:3px">{"Chủ đề":["word1","word2"]}</code> &nbsp;·&nbsp; 📝 TXT: <code style="background:var(--s3);padding:1px 5px;border-radius:3px">[Chủ đề]↵word1</code>
+      </div>
+    </div>`;
+  } else {
+    header.innerHTML = `<div style="margin-bottom:20px">
+      <div style="font-size:20px;font-weight:800">📚 Từ vựng theo chủ đề</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">Chọn chủ đề để bắt đầu học</div>
+    </div>`;
+  }
+
   if(!keys.length) {
     grid.innerHTML = '';
     empty.style.display = 'block';
+    const hint = document.getElementById('topicsEmptyHint');
+    if(hint) hint.textContent = isAdmin ? 'Nhấn "Nhập hàng loạt" để thêm từ vựng.' : 'Liên hệ quản trị viên để được thêm tài liệu.';
     return;
   }
   empty.style.display = 'none';
-  const noTopic = vocabList.filter(v=>!v.topic);
+
   grid.innerHTML = keys.map(t => {
     const words = topics[t];
     const learned = words.filter(v=>v.learned).length;
     const pct = words.length ? Math.round(learned/words.length*100) : 0;
     const barColor = pct>=80?'var(--ok)':pct>=40?'var(--warn)':'var(--accent)';
-    return `<div class="card" style="padding:18px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">
-        <div style="font-size:15px;font-weight:700;line-height:1.3">${esc(t)}</div>
-        <button onclick="deleteTopicWords('${esc(t)}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0;opacity:.5;transition:.2s" onmouseover="this.style.opacity=1;this.style.color='var(--err)'" onmouseout="this.style.opacity=.5;this.style.color='var(--muted)'">🗑</button>
+    const deleteBtn = isAdmin
+      ? `<button data-t="${esc(t)}" onclick="deleteTopicWords(this.dataset.t)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0;opacity:.45;transition:.2s" onmouseover="this.style.opacity=1;this.style.color='var(--err)'" onmouseout="this.style.opacity=.45;this.style.color='var(--muted)'">🗑</button>`
+      : '';
+    return `<div class="card" style="padding:18px;cursor:default">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
+        <div style="font-size:15px;font-weight:700;line-height:1.35">${esc(t)}</div>
+        ${deleteBtn}
       </div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">${words.length} từ · ${learned} đã học (${pct}%)</div>
-      <div style="height:5px;background:var(--border);border-radius:3px;margin-bottom:14px">
-        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .4s"></div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">${words.length} từ · ${learned} đã học (${pct}%)</div>
+      <div style="height:4px;background:var(--border);border-radius:3px;margin-bottom:14px">
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .5s"></div>
       </div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
         <button class="btn btn-s btn-sm" data-topic="${esc(t)}" onclick="studyTopicFlashcard(this.dataset.topic)">🃏 Flashcard</button>
         <button class="btn btn-g btn-sm" data-topic="${esc(t)}" onclick="studyTopicQuiz(this.dataset.topic)">🧠 Quiz</button>
-        <button class="btn btn-g btn-sm" data-topic="${esc(t)}" onclick="browseTopicVocab(this.dataset.topic)">📖 Xem từ</button>
+        <button class="btn btn-g btn-sm" data-topic="${esc(t)}" onclick="browseTopicVocab(this.dataset.topic)">📖 Từ vựng</button>
       </div>
     </div>`;
-  }).join('') + (noTopic.length ? `<div class="card" style="padding:18px;opacity:.65">
-    <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--muted)">Không có chủ đề</div>
-    <div style="font-size:13px;color:var(--muted)">${noTopic.length} từ chưa gán chủ đề</div>
-    <div style="margin-top:12px"><button class="btn btn-g btn-sm" onclick="browseTopicVocab('')">📖 Xem từ</button></div>
+  }).join('') + (isAdmin && vocabList.filter(v=>!v.topic).length ? `<div class="card" style="padding:18px;opacity:.6">
+    <div style="font-size:13px;font-weight:700;margin-bottom:4px;color:var(--muted)">Chưa gán chủ đề</div>
+    <div style="font-size:12px;color:var(--muted)">${vocabList.filter(v=>!v.topic).length} từ</div>
+    <div style="margin-top:10px"><button class="btn btn-g btn-sm" onclick="browseTopicVocab('')">📖 Xem từ</button></div>
   </div>` : '');
 }
 
@@ -3250,6 +3296,7 @@ async function adminLogin() {
     _adminUnlocked = true;
     _adminFailCount = 0;
     document.getElementById('adminBtn').style.opacity = '1';
+    if(document.getElementById('page-topics').classList.contains('active')) renderTopicsPage();
     openAdmin();
   } else {
     _adminFailCount++;
@@ -5980,6 +6027,7 @@ renderLessonTable();
 
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.classList.toggle('light-mode', t==='light');
   const btn = document.getElementById('themeBtn');
   if(btn) btn.textContent = t==='dark' ? '☀️ Sáng' : '🌙 Tối';
   localStorage.setItem('eh_theme', t);
