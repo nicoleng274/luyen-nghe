@@ -852,47 +852,75 @@ audio{width:100%;accent-color:var(--accent)}
 
 <!-- Bulk topic import modal -->
 <div class="topic-modal-bg" id="bulkTopicModalBg" onclick="if(event.target===this)closeBulkTopicModal()">
-  <div class="topic-modal" style="width:min(600px,96vw)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+  <div class="topic-modal" style="width:min(640px,96vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:17px;font-weight:700">⬆ Nhập từ vựng hàng loạt</div>
       <button onclick="closeBulkTopicModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
     </div>
     <!-- Tabs -->
-    <div style="display:flex;gap:6px;margin-bottom:16px">
-      <button id="btTab1" class="btn btn-s btn-sm" onclick="switchBtTab(1)">📄 File JSON / TXT</button>
-      <button id="btTab2" class="btn btn-g btn-sm" onclick="switchBtTab(2)">✏️ Nhập tay</button>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      <button id="btTab1" class="btn btn-s btn-sm" onclick="switchBtTab(1)">📊 Bảng từ vựng</button>
+      <button id="btTab2" class="btn btn-g btn-sm" onclick="switchBtTab(2)">📋 Danh sách chủ đề</button>
+      <button id="btTab3" class="btn btn-g btn-sm" onclick="switchBtTab(3)">✏️ Nhập tay</button>
     </div>
-    <!-- Tab 1: File upload -->
+
+    <!-- Tab 1: Vocab table (image/PDF/DOCX/CSV/TXT) -->
     <div id="btPane1">
-      <label style="display:block;border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="margin-bottom:12px">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Tên chủ đề</label>
+        <input id="btTopicName" class="if" placeholder="VD: Hội thảo và máy tính, Hợp đồng...">
+      </div>
+      <label id="btDropZone" style="display:block;border:2px dashed var(--border);border-radius:var(--r);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:32px;margin-bottom:8px">📂</div>
+        <div style="font-weight:600;margin-bottom:6px">Chọn file chứa bảng từ vựng</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.8">
+          🖼️ Ảnh (JPG/PNG) · 📄 PDF · 📝 Word (DOCX) · 📊 CSV · 📋 TXT<br>
+          Định dạng hàng: <code style="background:var(--s3);padding:1px 5px;border-radius:3px">1 contract v /ˈkɒntrækt/ hợp đồng</code>
+        </div>
+        <input type="file" id="btVocabFile" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.docx,.doc,.csv,.txt,.xlsx" style="display:none" onchange="loadVocabTableFile(this)">
+      </label>
+      <div id="btTablePreview" style="display:none;margin-top:12px;background:var(--s2);border-radius:var(--rs);padding:12px;font-size:12.5px;max-height:220px;overflow-y:auto"></div>
+    </div>
+
+    <!-- Tab 2: Topic word-list (JSON/TXT) -->
+    <div id="btPane2" style="display:none">
+      <label style="display:block;border:2px dashed var(--border);border-radius:var(--r);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:32px;margin-bottom:8px">📂</div>
         <div style="font-weight:600;margin-bottom:4px">Chọn file JSON hoặc TXT</div>
-        <div style="font-size:12px;color:var(--muted)">JSON: {"Chủ đề":["word1","word2"]} &nbsp;|&nbsp; TXT: [Chủ đề]↵word1↵word2</div>
+        <div style="font-size:12px;color:var(--muted)">JSON: <code style="background:var(--s3);padding:1px 5px;border-radius:3px">{"Chủ đề":["word1","word2"]}</code> &nbsp;|&nbsp; TXT: <code style="background:var(--s3);padding:1px 5px;border-radius:3px">[Chủ đề]↵word1↵word2</code></div>
         <input type="file" accept=".json,.txt" style="display:none" onchange="loadBulkTopicFile(this)">
       </label>
       <div id="btFilePreview" style="display:none;margin-top:12px;background:var(--s2);border-radius:var(--rs);padding:12px;font-size:12.5px;max-height:200px;overflow-y:auto"></div>
-    </div>
-    <!-- Tab 2: Manual -->
-    <div id="btPane2" style="display:none">
-      <div style="margin-bottom:10px">
-        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px">Nhập nội dung theo định dạng TXT</label>
-        <textarea id="btManualText" class="if" rows="12" placeholder="[Hợp đồng và tiếp thị]&#10;contract&#10;negotiate&#10;marketing&#10;proposal&#10;&#10;[Công nghệ]&#10;software&#10;hardware&#10;database" style="resize:vertical;font-family:monospace;font-size:12.5px"></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="btAutoLookup" checked> Tự động tra nghĩa
+        </label>
+        <span style="font-size:12px;color:var(--muted)">(bỏ chọn để nhập nhanh)</span>
       </div>
     </div>
-    <!-- Options -->
-    <div style="display:flex;align-items:center;gap:16px;margin:14px 0 6px;flex-wrap:wrap">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-        <input type="checkbox" id="btAutoLookup" checked> Tự động tra nghĩa
-      </label>
-      <div style="font-size:12px;color:var(--muted)">(bỏ chọn để nhập nhanh, tra nghĩa sau)</div>
+
+    <!-- Tab 3: Manual paste -->
+    <div id="btPane3" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button id="btManualModeA" class="btn btn-s btn-sm" onclick="switchBtManualMode('table')">📊 Bảng từ vựng</button>
+        <button id="btManualModeB" class="btn btn-g btn-sm" onclick="switchBtManualMode('list')">📋 Danh sách từ</button>
+      </div>
+      <div id="btManualTableHint" style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.7">
+        Mỗi dòng: <code style="background:var(--s3);padding:1px 5px;border-radius:3px">1 contract v /ˈkɒntrækt/ hợp đồng</code><br>
+        Cột: [STT] TỪ LOẠI_TỪ [/PHIÊN_ÂM/] NGHĨA_TIẾNG_VIỆT
+      </div>
+      <input id="btManualTopic" class="if" placeholder="Tên chủ đề (tùy chọn)" style="margin-bottom:8px">
+      <textarea id="btManualText" class="if" rows="11" placeholder="1 contract v /ˈkɒntrækt/ hợp đồng&#10;2 negotiate v /nɪˈɡəʊʃieɪt/ thương lượng&#10;3 proposal n /prəˈpəʊzəl/ đề xuất" style="resize:vertical;font-family:monospace;font-size:12.5px"></textarea>
     </div>
-    <div id="btProgress" style="display:none;margin-bottom:10px">
+
+    <!-- Progress -->
+    <div id="btProgress" style="display:none;margin-top:12px">
       <div style="font-size:13px;color:var(--muted);margin-bottom:6px" id="btProgressText">Đang xử lý...</div>
       <div style="height:6px;background:var(--border);border-radius:3px">
         <div id="btProgressBar" style="height:100%;background:var(--ok);border-radius:3px;transition:width .3s;width:0%"></div>
       </div>
     </div>
-    <button class="btn btn-s" id="btImportBtn" onclick="runBulkTopicImport()" style="width:100%">🚀 Bắt đầu nhập</button>
+    <button class="btn btn-s" id="btImportBtn" onclick="runBulkTopicImport()" style="width:100%;margin-top:14px">🚀 Bắt đầu nhập</button>
   </div>
 </div>
 
@@ -2269,27 +2297,100 @@ function exportAllTopicsJSON() {
 }
 
 // ── Bulk topic import modal ──
-let _btTopicData = null; // parsed preview data
+let _btTopicData = null;   // {topic: [{word,ipa,pos,viMeaning}|string]} for table; or {topic: [string]} for list
 let _btImporting = false;
+let _btMode = 'table';     // 'table' | 'list'  (current active tab)
+let _btManualMode = 'table'; // manual pane sub-mode
 
-function openBulkTopicModal() {
-  document.getElementById('bulkTopicModalBg').classList.add('open');
-  switchBtTab(1);
-}
-function closeBulkTopicModal() {
-  if(_btImporting) return;
-  document.getElementById('bulkTopicModalBg').classList.remove('open');
-  _btTopicData = null;
-  document.getElementById('btFilePreview').style.display = 'none';
-  document.getElementById('btManualText').value = '';
-}
-function switchBtTab(n) {
-  document.getElementById('btPane1').style.display = n===1?'':'none';
-  document.getElementById('btPane2').style.display = n===2?'':'none';
-  document.getElementById('btTab1').className = n===1?'btn btn-s btn-sm':'btn btn-g btn-sm';
-  document.getElementById('btTab2').className = n===2?'btn btn-s btn-sm':'btn btn-g btn-sm';
+const POS_MAP = {v:'verb',n:'noun',adj:'adjective',adv:'adverb',verb:'verb',noun:'noun',
+  adjective:'adjective',adverb:'adverb',prep:'preposition',conj:'conjunction',
+  pron:'pronoun',det:'determiner',int:'interjection'};
+function normPos(raw) {
+  if(!raw) return 'other';
+  const p = raw.toLowerCase().split('/')[0].trim();
+  return POS_MAP[p] || p;
 }
 
+// ─── Vocab table text parser ─────────────────────────────────────────────────
+// Supports rows like: [NO.] word POS [/ipa/] Vietnamese meaning
+function parseVocabTableText(text, topic) {
+  const entries = [];
+  const ROW = /^(?:\d+[\.\s]+)?([a-zA-Z][a-zA-Z\s'''\-]{0,50}?)\s+(v\/n|n\/v|v\/adj|adj\/v|n\/adj|adj\/n|adj\/adv|v\/adv|v|n|adj|adv|prep|conj|pron|det|int|verb|noun)\s*(\/[^\n\/]{2,40}\/|\/[^\n]+\/)?\s*(.+)?$/i;
+  const seen = {};
+  text.split('\n').forEach(line => {
+    const t = line.trim();
+    if(!t || t.length < 4) return;
+    const m = t.match(ROW);
+    if(!m) return;
+    const word = m[1].trim().toLowerCase().replace(/\s+/g,' ');
+    const pos  = normPos(m[2]);
+    const ipa  = (m[3]||'').trim();
+    const vi   = (m[4]||'').trim().replace(/^\s*[-–—]\s*/,'');
+    if(word.length < 2 || !vi) return;
+    // Merge multi-POS rows for same word
+    if(seen[word]) {
+      const e = seen[word];
+      if(!e.meanings[pos]) { e.meanings[pos]=[]; e.viMeanings[pos]=[]; }
+      e.meanings[pos].push(vi);
+      e.viMeanings[pos].push(vi);
+      if(!e.ipa && ipa) e.ipa = ipa;
+    } else {
+      const entry = { word, ipa, audioUrl:'', example:'', topic,
+        meanings:   { [pos]: [vi] },
+        viMeanings: { [pos]: [vi] },
+        learned: false, addedAt: Date.now() };
+      seen[word] = entry;
+      entries.push(entry);
+    }
+  });
+  return entries;
+}
+
+// ─── CSV parser ──────────────────────────────────────────────────────────────
+function parseCSVVocabTable(text, topic) {
+  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length) return [];
+  // Parse CSV row (handles quoted fields)
+  function parseRow(line) {
+    const fields=[]; let cur='', inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){inQ=!inQ;}
+      else if((c===','||c==='\t')&&!inQ){fields.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    fields.push(cur.trim()); return fields;
+  }
+  const header = parseRow(lines[0]).map(h=>h.toLowerCase().replace(/[^a-záàâăđêôơưảạắặ]/gi,''));
+  // Detect column indices
+  const iWord = header.findIndex(h=>/t[uừ]v[uo][cố]|t[uừ]m[oơ][iớ]|word|vocab/.test(h));
+  const iPos  = header.findIndex(h=>/lo[aạ][iị]|d[aạ]ngt[uừ]|pos|type/.test(h));
+  const iIpa  = header.findIndex(h=>/phi[eê]n[aâ]m|ipa|phon/.test(h));
+  const iMean = header.findIndex(h=>/ngh[iĩ]a|mean|vi$/.test(h));
+  if(iWord<0) return parseVocabTableText(text, topic); // fallback
+  const entries=[]; const seen={};
+  lines.slice(1).forEach(line=>{
+    const f=parseRow(line);
+    const word=(f[iWord]||'').toLowerCase().trim();
+    const pos = iPos>=0 ? normPos(f[iPos]) : 'other';
+    const ipa = iIpa>=0 ? (f[iIpa]||'').trim() : '';
+    const vi  = iMean>=0 ? (f[iMean]||'').trim() : '';
+    if(!word || word.length<2) return;
+    if(seen[word]) {
+      const e=seen[word];
+      if(!e.meanings[pos]){e.meanings[pos]=[];e.viMeanings[pos]=[];}
+      if(vi){e.meanings[pos].push(vi);e.viMeanings[pos].push(vi);}
+    } else {
+      const e={word,ipa,audioUrl:'',example:'',topic,
+        meanings:{[pos]:vi?[vi]:[]},viMeanings:{[pos]:vi?[vi]:[]},
+        learned:false,addedAt:Date.now()};
+      seen[word]=e; entries.push(e);
+    }
+  });
+  return entries;
+}
+
+// ─── Word-list text parser (topic sections) ──────────────────────────────────
 function parseBulkTopicText(text) {
   const result = {}; let cur = null;
   text.split('\n').forEach(line => {
@@ -2302,6 +2403,115 @@ function parseBulkTopicText(text) {
   return result;
 }
 
+function openBulkTopicModal() {
+  document.getElementById('bulkTopicModalBg').classList.add('open');
+  switchBtTab(1);
+}
+function closeBulkTopicModal() {
+  if(_btImporting) return;
+  document.getElementById('bulkTopicModalBg').classList.remove('open');
+  _btTopicData = null;
+  document.getElementById('btTablePreview').style.display = 'none';
+  document.getElementById('btFilePreview').style.display = 'none';
+  document.getElementById('btManualText').value = '';
+  document.getElementById('btTopicName').value = '';
+  document.getElementById('btManualTopic').value = '';
+  document.getElementById('btProgress').style.display = 'none';
+  document.getElementById('btProgressBar').style.width = '0%';
+}
+function switchBtTab(n) {
+  [1,2,3].forEach(i=>{
+    document.getElementById('btPane'+i).style.display = n===i?'':'none';
+    document.getElementById('btTab'+i).className = n===i?'btn btn-s btn-sm':'btn btn-g btn-sm';
+  });
+  _btMode = n===1?'table': n===2?'list':'manual';
+}
+function switchBtManualMode(m) {
+  _btManualMode = m;
+  const hint = document.getElementById('btManualTableHint');
+  if(hint) hint.style.display = m==='table'?'':'none';
+  document.getElementById('btManualModeA').className = m==='table'?'btn btn-s btn-sm':'btn btn-g btn-sm';
+  document.getElementById('btManualModeB').className = m==='list' ?'btn btn-s btn-sm':'btn btn-g btn-sm';
+  document.getElementById('btManualText').placeholder = m==='table'
+    ? '1 contract v /ˈkɒntrækt/ hợp đồng\n2 negotiate v /nɪˈɡəʊʃieɪt/ thương lượng\n3 proposal n /prəˈpəʊzəl/ đề xuất'
+    : '[Hợp đồng và tiếp thị]\ncontract\nnegotiate\n\n[Công nghệ]\nsoftware\nhardware';
+}
+
+// ─── File upload handlers ─────────────────────────────────────────────────────
+async function loadVocabTableFile(input) {
+  const file = input.files[0]; if(!file) return;
+  const topic = document.getElementById('btTopicName').value.trim();
+  const prog = document.getElementById('btProgress');
+  const progText = document.getElementById('btProgressText');
+  const progBar  = document.getElementById('btProgressBar');
+  prog.style.display = 'block';
+  progText.textContent = 'Đang đọc file...';
+  progBar.style.width = '10%';
+  input.value = '';
+
+  try {
+    let entries = [];
+    const ext = file.name.split('.').pop().toLowerCase();
+    const imgExts = ['jpg','jpeg','png','gif','webp','bmp','tiff'];
+
+    if(imgExts.includes(ext)) {
+      progText.textContent = '🔍 Đang nhận dạng văn bản (OCR)... có thể mất 20-40 giây';
+      progBar.style.width = '20%';
+      if(!window.Tesseract) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js');
+      const text = await new Promise((res,rej)=>{
+        Tesseract.recognize(file,'eng+vie',{logger:m=>{
+          if(m.status==='recognizing text') progBar.style.width = 20+Math.round(m.progress*60)+'%';
+        }}).then(({data:{text}})=>res(text)).catch(rej);
+      });
+      entries = parseVocabTableText(text, topic);
+    } else if(ext==='pdf') {
+      progText.textContent = '📄 Đang đọc PDF...';
+      if(!window.pdfjsLib){
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+      const ab = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+      let text='';
+      for(let i=1;i<=Math.min(pdf.numPages,40);i++){
+        progBar.style.width = 20+Math.round(i/pdf.numPages*60)+'%';
+        const page=await pdf.getPage(i);
+        const content=await page.getTextContent();
+        // Preserve row structure: group items by y-position
+        const rows={};
+        content.items.forEach(item=>{
+          const y=Math.round(item.transform[5]);
+          if(!rows[y]) rows[y]=[];
+          rows[y].push(item.str);
+        });
+        Object.keys(rows).sort((a,b)=>b-a).forEach(y=>{ text+=rows[y].join(' ')+'\n'; });
+      }
+      entries = parseVocabTableText(text, topic);
+    } else if(ext==='docx'||ext==='doc') {
+      progText.textContent = '📝 Đang đọc Word...';
+      if(!window.mammoth) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+      const ab = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({arrayBuffer:ab});
+      progBar.style.width = '70%';
+      entries = parseVocabTableText(result.value, topic);
+    } else if(ext==='csv'||ext==='txt') {
+      const text = await file.text();
+      entries = ext==='csv' ? parseCSVVocabTable(text, topic) : parseVocabTableText(text, topic);
+      if(!entries.length) entries = Object.entries(parseBulkTopicText(text)).flatMap(([t,ws])=>ws.map(w=>({word:w,ipa:'',audioUrl:'',example:'',topic:t||topic,meanings:{},viMeanings:{},learned:false,addedAt:Date.now()})));
+    }
+
+    progBar.style.width = '100%';
+    if(!entries.length){ progText.textContent='⚠️ Không phát hiện từ vựng nào'; return; }
+
+    // Store as flat list keyed by topic
+    _btTopicData = {_TABLE_: entries}; // special key marks table mode
+    showTablePreview(entries);
+    progText.textContent = `✅ Phát hiện ${entries.length} từ · Nhấn "Bắt đầu nhập"`;
+  } catch(err) {
+    progText.textContent = '❌ Lỗi: '+err.message;
+  }
+}
+
 function loadBulkTopicFile(input) {
   const file = input.files[0]; if(!file) return;
   const reader = new FileReader();
@@ -2309,105 +2519,152 @@ function loadBulkTopicFile(input) {
     const text = e.target.result;
     try {
       const json = JSON.parse(text);
-      // Normalize JSON: values can be arrays of strings or arrays of objects with .word
       _btTopicData = {};
-      Object.entries(json).forEach(([topic, words]) => {
-        _btTopicData[topic] = (Array.isArray(words) ? words : []).map(w=>
-          (typeof w==='string'?w:(w.word||'')).toLowerCase().trim()
-        ).filter(Boolean);
+      Object.entries(json).forEach(([topic,words])=>{
+        _btTopicData[topic]=(Array.isArray(words)?words:[]).map(w=>(typeof w==='string'?w:(w.word||'')).toLowerCase().trim()).filter(Boolean);
       });
-    } catch {
-      _btTopicData = parseBulkTopicText(text);
-    }
-    showBulkPreview();
+    } catch { _btTopicData = parseBulkTopicText(text); }
+    showBulkListPreview();
   };
-  reader.readAsText(file);
-  input.value = '';
+  reader.readAsText(file); input.value='';
 }
 
-function showBulkPreview() {
+function showTablePreview(entries) {
+  const preview = document.getElementById('btTablePreview');
+  const sample = entries.slice(0,12);
+  preview.innerHTML = `<div style="font-weight:600;margin-bottom:8px;color:var(--text)">${entries.length} từ được phát hiện:</div>` +
+    `<table style="width:100%;border-collapse:collapse;font-size:11.5px">` +
+    sample.map(e=>{
+      const pos = Object.keys(e.meanings)[0]||'';
+      const vi  = Object.values(e.viMeanings)[0]?.[0]||'';
+      return `<tr><td style="padding:3px 8px 3px 0;font-weight:600;color:var(--text)">${esc(e.word)}</td><td style="padding:3px 6px;color:var(--accent);font-size:11px">${pos}</td><td style="padding:3px 6px;color:var(--a3);font-size:11px;font-style:italic">${esc(e.ipa)}</td><td style="padding:3px 0;color:var(--muted)">${esc(vi)}</td></tr>`;
+    }).join('') +
+    (entries.length>12?`<tr><td colspan="4" style="color:var(--muted);padding:4px 0">...và ${entries.length-12} từ nữa</td></tr>`:'') +
+    `</table>`;
+  preview.style.display = 'block';
+}
+function showBulkListPreview() {
   if(!_btTopicData) return;
   const preview = document.getElementById('btFilePreview');
   const keys = Object.keys(_btTopicData);
-  const totalWords = Object.values(_btTopicData).reduce((s,w)=>s+w.length,0);
-  preview.innerHTML = `<strong style="color:var(--text)">${keys.length} chủ đề · ${totalWords} từ</strong><br>` +
+  const total = Object.values(_btTopicData).reduce((s,w)=>s+w.length,0);
+  preview.innerHTML = `<strong style="color:var(--text)">${keys.length} chủ đề · ${total} từ</strong><br>` +
     keys.slice(0,8).map(k=>`<span style="display:inline-block;margin:3px;padding:2px 8px;background:var(--s3);border-radius:6px;font-size:11.5px"><strong>${esc(k)}</strong>: ${_btTopicData[k].length} từ</span>`).join('') +
-    (keys.length>8 ? `<span style="color:var(--muted);font-size:12px"> ...+${keys.length-8} chủ đề nữa</span>` : '');
+    (keys.length>8?`<span style="color:var(--muted);font-size:12px"> ...+${keys.length-8} chủ đề nữa</span>`:'');
   preview.style.display = 'block';
 }
 
+// ─── Run import ───────────────────────────────────────────────────────────────
 async function runBulkTopicImport() {
   if(_btImporting) return;
-  const tab2Active = document.getElementById('btPane2').style.display !== 'none';
-  if(tab2Active) {
-    _btTopicData = parseBulkTopicText(document.getElementById('btManualText').value);
-  }
-  if(!_btTopicData || !Object.keys(_btTopicData).length) {
-    showToast('Chưa có dữ liệu để nhập','e'); return;
-  }
-  const withLookup = document.getElementById('btAutoLookup').checked;
-  const btn = document.getElementById('btImportBtn');
-  const progress = document.getElementById('btProgress');
-  const progText = document.getElementById('btProgressText');
-  const progBar  = document.getElementById('btProgressBar');
-  _btImporting = true;
-  btn.disabled = true;
-  progress.style.display = 'block';
 
-  const existing = new Set(vocabList.map(v=>v.word));
-  const allWords = []; // [{word, topic}]
-  Object.entries(_btTopicData).forEach(([topic, words]) => {
-    words.forEach(w => { if(!existing.has(w)) allWords.push({word:w, topic}); });
-  });
-  const skipped = Object.values(_btTopicData).reduce((s,w)=>s+w.length,0) - allWords.length;
-  let done = 0;
-
-  for(const item of allWords) {
-    progText.textContent = `[${item.topic}] ${item.word} (${done+1}/${allWords.length})`;
-    progBar.style.width = Math.round((done+1)/allWords.length*100)+'%';
-    if(withLookup) {
-      try {
-        const dictData = await apiFreeDict(item.word);
-        if(dictData) {
-          const parsed = parseFreeDict(dictData);
-          const meanings={}, viMeanings={};
-          for(const [pos,defs] of Object.entries(parsed.posGroups||{})){
-            meanings[pos]=defs.map(d=>d.def);
-            viMeanings[pos]=defs.map(()=>'…');
-          }
-          const entry={word:item.word,ipa:parsed.ipa||'',audioUrl:parsed.audioUrl||'',example:parsed.example||'',meanings,viMeanings,learned:false,addedAt:Date.now(),topic:item.topic};
-          vocabList.push(entry);
-          // translate in background
-          (async(e)=>{
-            for(const [pos,defs] of Object.entries(parsed.posGroups||{})){
-              const t=[];
-              for(const d of defs) t.push(await apiTranslateOne(d.def));
-              const idx=vocabList.findIndex(v=>v.word===e.word);
-              if(idx>=0){ vocabList[idx].viMeanings[pos]=t; localStorage.setItem(lsk('eh_vocab'),JSON.stringify(vocabList)); }
-            }
-          })(entry);
-          await new Promise(r=>setTimeout(r,250));
-        }
-      } catch {
-        vocabList.push({word:item.word,ipa:'',audioUrl:'',example:'',meanings:{},viMeanings:{},learned:false,addedAt:Date.now(),topic:item.topic});
-      }
+  // Collect data based on active tab
+  if(_btMode === 'manual') {
+    const text = document.getElementById('btManualText').value;
+    const manualTopic = document.getElementById('btManualTopic').value.trim();
+    if(_btManualMode === 'table') {
+      const entries = parseVocabTableText(text, manualTopic||'');
+      _btTopicData = entries.length ? {_TABLE_:entries} : null;
     } else {
-      vocabList.push({word:item.word,ipa:'',audioUrl:'',example:'',meanings:{},viMeanings:{},learned:false,addedAt:Date.now(),topic:item.topic});
+      _btTopicData = parseBulkTopicText(text);
     }
-    localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
-    done++;
   }
 
-  progText.textContent = `✅ Đã nhập ${done} từ${skipped?` (bỏ qua ${skipped} từ đã có)`:''} vào ${Object.keys(_btTopicData).length} chủ đề`;
-  progBar.style.width = '100%';
-  renderVocabTable(); renderTopicsPage(); renderHome();
-  showToast(`📚 Nhập xong ${done} từ · ${Object.keys(_btTopicData).length} chủ đề`);
+  if(!_btTopicData || !Object.keys(_btTopicData).length){ showToast('Chưa có dữ liệu để nhập','e'); return; }
+
+  const isTableMode = '_TABLE_' in _btTopicData;
+  const btn=document.getElementById('btImportBtn');
+  const prog=document.getElementById('btProgress');
+  const progText=document.getElementById('btProgressText');
+  const progBar=document.getElementById('btProgressBar');
+  _btImporting=true; btn.disabled=true;
+  prog.style.display='block';
+
+  let done=0, skipped=0;
+
+  if(isTableMode) {
+    // Table entries already have meanings — just insert directly
+    const entries = _btTopicData['_TABLE_'];
+    const existing = new Set(vocabList.map(v=>v.word));
+    for(const entry of entries) {
+      progText.textContent=`${entry.word} (${done+1}/${entries.length})`;
+      progBar.style.width=Math.round((done+1)/entries.length*100)+'%';
+      if(existing.has(entry.word)) {
+        // Merge: add missing POS meanings only
+        const idx=vocabList.findIndex(v=>v.word===entry.word);
+        if(idx>=0){
+          Object.entries(entry.meanings).forEach(([pos,defs])=>{
+            if(!vocabList[idx].meanings[pos]) vocabList[idx].meanings[pos]=defs;
+            if(!vocabList[idx].viMeanings[pos]) vocabList[idx].viMeanings[pos]=entry.viMeanings[pos];
+            if(!vocabList[idx].ipa&&entry.ipa) vocabList[idx].ipa=entry.ipa;
+            if(!vocabList[idx].topic&&entry.topic) vocabList[idx].topic=entry.topic;
+          });
+        }
+        skipped++;
+      } else {
+        vocabList.push(entry);
+        existing.add(entry.word);
+      }
+      done++;
+      if(done%20===0) localStorage.setItem(lsk('eh_vocab'),JSON.stringify(vocabList));
+    }
+    localStorage.setItem(lsk('eh_vocab'),JSON.stringify(vocabList));
+    const topics=[...new Set(entries.map(e=>e.topic).filter(Boolean))];
+    progText.textContent=`✅ Đã nhập ${done-skipped} từ mới · ${skipped} từ đã gộp · chủ đề: ${topics.join(', ')||'chưa gán'}`;
+    progBar.style.width='100%';
+    renderVocabTable(); renderTopicsPage(); renderHome();
+    showToast(`📚 Nhập xong ${done} từ${topics.length?' – '+topics[0]+(topics.length>1?'...':''):''}`);
+  } else {
+    // Word-list mode (with optional API lookup)
+    const withLookup = document.getElementById('btAutoLookup')?.checked ?? false;
+    const existing=new Set(vocabList.map(v=>v.word));
+    const allWords=[];
+    Object.entries(_btTopicData).forEach(([topic,words])=>{
+      words.forEach(w=>{ if(!existing.has(w)) allWords.push({word:w,topic}); else skipped++; });
+    });
+    for(const item of allWords){
+      progText.textContent=`[${item.topic}] ${item.word} (${done+1}/${allWords.length})`;
+      progBar.style.width=Math.round((done+1)/allWords.length*100)+'%';
+      if(withLookup){
+        try{
+          const dictData=await apiFreeDict(item.word);
+          if(dictData){
+            const p=parseFreeDict(dictData);
+            const m={},vi={};
+            for(const [pos,defs] of Object.entries(p.posGroups||{})){m[pos]=defs.map(d=>d.def);vi[pos]=defs.map(()=>'…');}
+            const e={word:item.word,ipa:p.ipa||'',audioUrl:p.audioUrl||'',example:p.example||'',meanings:m,viMeanings:vi,learned:false,addedAt:Date.now(),topic:item.topic};
+            vocabList.push(e); existing.add(item.word);
+            (async(en)=>{
+              for(const [pos,defs] of Object.entries(p.posGroups||{})){
+                const t=[];for(const d of defs)t.push(await apiTranslateOne(d.def));
+                const idx=vocabList.findIndex(v=>v.word===en.word);
+                if(idx>=0){vocabList[idx].viMeanings[pos]=t;localStorage.setItem(lsk('eh_vocab'),JSON.stringify(vocabList));}
+              }
+            })(e);
+            await new Promise(r=>setTimeout(r,250));
+          }
+        } catch {
+          vocabList.push({word:item.word,ipa:'',audioUrl:'',example:'',meanings:{},viMeanings:{},learned:false,addedAt:Date.now(),topic:item.topic});
+          existing.add(item.word);
+        }
+      } else {
+        vocabList.push({word:item.word,ipa:'',audioUrl:'',example:'',meanings:{},viMeanings:{},learned:false,addedAt:Date.now(),topic:item.topic});
+        existing.add(item.word);
+      }
+      localStorage.setItem(lsk('eh_vocab'),JSON.stringify(vocabList));
+      done++;
+    }
+    const nTopics=Object.keys(_btTopicData).length;
+    progText.textContent=`✅ Đã nhập ${done} từ${skipped?` (bỏ qua ${skipped} từ đã có)`:''} · ${nTopics} chủ đề`;
+    progBar.style.width='100%';
+    renderVocabTable(); renderTopicsPage(); renderHome();
+    showToast(`📚 Nhập xong ${done} từ · ${nTopics} chủ đề`);
+  }
 
   setTimeout(()=>{
-    _btImporting = false; btn.disabled = false;
-    progress.style.display = 'none'; progBar.style.width='0%';
+    _btImporting=false; btn.disabled=false;
     closeBulkTopicModal();
-  }, 2000);
+  }, 2500);
 }
 
 // Flashcard topic filter (used by studyTopicFlashcard)
