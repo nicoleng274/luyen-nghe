@@ -6009,6 +6009,235 @@ renderLessonTable();
 })();
 
 // ═══════════════════════════════════════════
+//  FIREBASE / CLOUD AUTH & SYNC
+// ═══════════════════════════════════════════
+let _fbApp = null, _fbAuth = null, _fbDB = null, _currentUser = null;
+let _syncTimer = null, _syncPending = false;
+let _authTab = 'login';
+
+function getFirebaseConfig() {
+  try { return JSON.parse(localStorage.getItem('firebase_config')||'null'); } catch { return null; }
+}
+
+function initFirebase(config) {
+  if (_fbApp) return;
+  try {
+    _fbApp = firebase.initializeApp(config);
+    _fbAuth = firebase.auth();
+    _fbDB   = firebase.firestore();
+    _fbAuth.onAuthStateChanged(user => {
+      _currentUser = user;
+      updateAuthUI();
+      if (user) { loadFromCloud(); }
+    });
+    return true;
+  } catch(e) { console.error('Firebase init error:', e); return false; }
+}
+
+(function tryInitFirebase() {
+  const cfg = getFirebaseConfig();
+  if (cfg) initFirebase(cfg);
+})();
+
+function updateAuthUI() {
+  const area = document.getElementById('cloudAuthArea');
+  if (!area) return;
+  const cfg = getFirebaseConfig();
+  if (!cfg) {
+    area.innerHTML = `<button onclick="openCloudAuthModal('setup')" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:7px">☁️ <span>Đăng nhập / Đồng bộ</span></button>`;
+  } else if (!_currentUser) {
+    area.innerHTML = `<button onclick="openCloudAuthModal('login')" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:7px">👤 <span>Đăng nhập tài khoản</span></button>`;
+  } else {
+    const email = _currentUser.email || '';
+    const short = email.length > 22 ? email.slice(0,20)+'…' : email;
+    area.innerHTML = `<div style="padding:8px 12px;border-radius:8px;border:1px solid rgba(124,111,255,.3);background:rgba(124,111,255,.08)">
+      <div style="font-size:11.5px;color:var(--accent);font-weight:700;margin-bottom:2px">✅ Đã đăng nhập</div>
+      <div style="font-size:12px;color:var(--text);margin-bottom:6px;word-break:break-all">${esc(short)}</div>
+      <div style="display:flex;gap:6px">
+        <button onclick="logoutUser()" style="flex:1;background:rgba(255,107,138,.12);border:1px solid rgba(255,107,138,.25);color:var(--err);font-family:inherit;font-size:11.5px;font-weight:600;border-radius:6px;padding:4px 8px;cursor:pointer">Đăng xuất</button>
+        <div id="syncStatus" style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px"></div>
+      </div>
+    </div>`;
+  }
+}
+
+function openCloudAuthModal(mode) {
+  const cfg = getFirebaseConfig();
+  const modal = document.getElementById('cloudAuthModal');
+  modal.style.display = 'flex';
+  if (mode === 'setup' || !cfg) {
+    document.getElementById('firebaseSetupArea').style.display = 'block';
+    document.getElementById('authFormArea').style.display = 'none';
+  } else {
+    showAuthForm();
+  }
+  switchAuthTab(_authTab);
+}
+function closeCloudAuthModal() {
+  document.getElementById('cloudAuthModal').style.display = 'none';
+}
+function showAuthForm() {
+  document.getElementById('firebaseSetupArea').style.display = 'none';
+  document.getElementById('authFormArea').style.display = 'block';
+}
+function switchAuthTab(tab) {
+  _authTab = tab;
+  const loginTab  = document.getElementById('tabLogin');
+  const signupTab = document.getElementById('tabSignup');
+  const btn       = document.getElementById('authSubmitBtn');
+  if (!loginTab) return;
+  if (tab === 'login') {
+    loginTab.style.borderBottomColor  = 'var(--accent)';
+    loginTab.style.color              = 'var(--text)';
+    loginTab.style.fontWeight         = '700';
+    signupTab.style.borderBottomColor = 'transparent';
+    signupTab.style.color             = 'var(--muted)';
+    signupTab.style.fontWeight        = '600';
+    if (btn) btn.textContent = 'Đăng nhập';
+  } else {
+    signupTab.style.borderBottomColor = 'var(--accent)';
+    signupTab.style.color             = 'var(--text)';
+    signupTab.style.fontWeight        = '700';
+    loginTab.style.borderBottomColor  = 'transparent';
+    loginTab.style.color              = 'var(--muted)';
+    loginTab.style.fontWeight         = '600';
+    if (btn) btn.textContent = 'Tạo tài khoản';
+  }
+  const errEl = document.getElementById('authError');
+  if (errEl) errEl.style.display = 'none';
+}
+
+async function submitAuth() {
+  if (!_fbAuth) { showAuthError('Firebase chưa được cấu hình.'); return; }
+  const email = (document.getElementById('authEmail')||{}).value?.trim();
+  const pw    = (document.getElementById('authPassword')||{}).value;
+  const errEl = document.getElementById('authError');
+  const btn   = document.getElementById('authSubmitBtn');
+  if (!email || !pw) { showAuthError('Vui lòng điền đầy đủ email và mật khẩu.'); return; }
+  btn.disabled = true;
+  btn.textContent = '⏳ Đang xử lý...';
+  try {
+    if (_authTab === 'login') {
+      await _fbAuth.signInWithEmailAndPassword(email, pw);
+    } else {
+      await _fbAuth.createUserWithEmailAndPassword(email, pw);
+    }
+    closeCloudAuthModal();
+    showToast(_authTab === 'login' ? '✅ Đăng nhập thành công!' : '✅ Tạo tài khoản thành công!');
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found':      'Email không tồn tại.',
+      'auth/wrong-password':      'Mật khẩu không đúng.',
+      'auth/email-already-in-use':'Email đã được dùng, hãy đăng nhập.',
+      'auth/weak-password':       'Mật khẩu cần ít nhất 6 ký tự.',
+      'auth/invalid-email':       'Email không hợp lệ.',
+      'auth/invalid-credential':  'Email hoặc mật khẩu không đúng.',
+      'auth/network-request-failed': 'Lỗi mạng, thử lại sau.',
+    };
+    showAuthError(msgs[e.code] || e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = _authTab === 'login' ? 'Đăng nhập' : 'Tạo tài khoản';
+  }
+}
+function showAuthError(msg) {
+  const el = document.getElementById('authError');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+async function logoutUser() {
+  if (!_fbAuth) return;
+  await _fbAuth.signOut();
+  showToast('Đã đăng xuất');
+}
+
+function saveFirebaseConfig() {
+  const raw = (document.getElementById('fbConfigInput')||{}).value?.trim();
+  const errEl = document.getElementById('fbConfigError');
+  try {
+    const cfg = JSON.parse(raw);
+    if (!cfg.apiKey || !cfg.projectId) throw new Error('Thiếu apiKey hoặc projectId');
+    localStorage.setItem('firebase_config', JSON.stringify(cfg));
+    const ok = initFirebase(cfg);
+    if (ok) {
+      if (errEl) errEl.style.display = 'none';
+      showAuthForm();
+      showToast('Kết nối Firebase thành công!');
+    }
+  } catch(e) {
+    if (errEl) { errEl.textContent = 'Cấu hình không hợp lệ: ' + e.message; errEl.style.display = 'block'; }
+  }
+}
+
+// ─── Cloud sync ──────────────────────────────────────────────────────────────
+function scheduleCloudSync() {
+  if (!_currentUser || !_fbDB) return;
+  _syncPending = true;
+  const el = document.getElementById('syncStatus');
+  if (el) el.innerHTML = '<span style="opacity:.6">🔄 Đồng bộ...</span>';
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(syncToCloud, 3000);
+}
+
+async function syncToCloud() {
+  if (!_currentUser || !_fbDB || !_syncPending) return;
+  _syncPending = false;
+  try {
+    const sr = {};
+    vocabList.forEach(v => {
+      const s = localStorage.getItem(lsk('sr_'+v.word));
+      if (s) { try { sr[v.word] = JSON.parse(s); } catch{} }
+    });
+    await _fbDB.collection('users').doc(_currentUser.uid).set({
+      vocab:    vocabList,
+      phrases:  phraseList,
+      scores:   scores.slice(-500),
+      rwords:   rWords,
+      activity: activity.slice(-90),
+      sr,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const el = document.getElementById('syncStatus');
+    if (el) { el.innerHTML = '<span style="color:var(--ok)">✓ Đã lưu</span>'; setTimeout(()=>{ if(el) el.innerHTML=''; }, 3000); }
+  } catch(e) {
+    console.error('Sync error:', e);
+    const el = document.getElementById('syncStatus');
+    if (el) el.innerHTML = '<span style="color:var(--err)">✗ Lỗi</span>';
+  }
+}
+
+async function loadFromCloud() {
+  if (!_currentUser || !_fbDB) return;
+  try {
+    const doc = await _fbDB.collection('users').doc(_currentUser.uid).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+    if (data.vocab    && Array.isArray(data.vocab))    { vocabList  = data.vocab;   localStorage.setItem(lsk('eh_vocab'),   JSON.stringify(vocabList)); }
+    if (data.phrases  && Array.isArray(data.phrases))  { phraseList = data.phrases; localStorage.setItem(lsk('eh_phrases'), JSON.stringify(phraseList)); }
+    if (data.scores   && Array.isArray(data.scores))   { scores     = data.scores;  localStorage.setItem(lsk('eh_scores'),  JSON.stringify(scores)); }
+    if (data.rwords   && Array.isArray(data.rwords))   { rWords     = data.rwords;  localStorage.setItem(lsk('eh_rwords'),  JSON.stringify(rWords)); }
+    if (data.activity && Array.isArray(data.activity)) { activity   = data.activity;localStorage.setItem(lsk('eh_act'),     JSON.stringify(activity)); }
+    if (data.sr && typeof data.sr === 'object') {
+      Object.entries(data.sr).forEach(([w,v]) => localStorage.setItem(lsk('sr_'+w), JSON.stringify(v)));
+    }
+    renderHome(); renderVocabTable(); renderPhraseTable(); renderScores(); renderTopicsPage();
+    showToast('☁️ Dữ liệu đã được tải từ cloud');
+  } catch(e) { console.error('Load from cloud error:', e); }
+}
+
+// ─── Intercept localStorage writes to trigger cloud sync automatically ───────
+(function patchLocalStorage() {
+  const orig = localStorage.setItem.bind(localStorage);
+  const syncKeys = ['eh_vocab','eh_phrases','eh_scores','eh_act','eh_rwords'];
+  localStorage.setItem = function(key, value) {
+    orig(key, value);
+    if (syncKeys.some(k => key === k || key.endsWith('_'+k)) || /[_]sr_/.test(key) || /^sr_/.test(key)) {
+      scheduleCloudSync();
+    }
+  };
+})();
+
+// ═══════════════════════════════════════════
 //  GLOBAL SEARCH
 // ═══════════════════════════════════════════
 let _gsDebounce;
