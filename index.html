@@ -7,31 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script>
-/* Apply saved theme before first paint — prevents dark flash */
-(function(){
-  var t=localStorage.getItem('eh_theme');
-  if(t==='light'){
-    var e=document.documentElement;
-    e.setAttribute('data-theme','light');
-    e.style.setProperty('--bg','#f0f2f7');
-    e.style.setProperty('--surface','#ffffff');
-    e.style.setProperty('--s2','#f0f2f7');
-    e.style.setProperty('--s3','#e4e7f0');
-    e.style.setProperty('--border','#d0d4e8');
-    e.style.setProperty('--accent','#5a4fd8');
-    e.style.setProperty('--a2','#e84060');
-    e.style.setProperty('--a3','#22b588');
-    e.style.setProperty('--a4','#c98a00');
-    e.style.setProperty('--text','#1a1a2e');
-    e.style.setProperty('--muted','#5a5a7a');
-    e.style.setProperty('--card','#ffffff');
-    e.style.setProperty('--ok','#22b588');
-    e.style.setProperty('--err','#e84060');
-    e.style.setProperty('--warn','#c98a00');
-  }
-})();
-</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --bg:#0c0c14;--surface:#13131e;--s2:#1c1c2e;--s3:#242438;
@@ -521,54 +499,6 @@ audio{width:100%;accent-color:var(--accent)}
 .ap-loop-btn{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
 .ap-loop-btn.active{background:rgba(61,219,165,.15);border-color:var(--ok);color:var(--ok)}
 
-/* ══ LIGHT THEME ══ */
-html[data-theme="light"]{
-  --bg:#f0f2f7;--surface:#ffffff;--s2:#f5f6fa;--s3:#e8eaf2;
-  --border:#d0d4e8;--accent:#5a4fd8;--a2:#e84060;--a3:#22b588;--a4:#c98a00;
-  --text:#1a1a2e;--muted:#5a5a7a;--card:#ffffff;
-  --ok:#22b588;--err:#e84060;--warn:#c98a00;
-  --r:12px;--rs:8px;
-}
-html[data-theme="light"] body{background:var(--bg);color:var(--text)}
-html[data-theme="light"] .sidebar{background:var(--surface);box-shadow:2px 0 16px rgba(0,0,0,.08)}
-html[data-theme="light"] .card{background:var(--card);border-color:var(--border)}
-html[data-theme="light"] .if{background:var(--s2);border-color:var(--border);color:var(--text)}
-html[data-theme="light"] .if::placeholder{color:var(--muted)}
-html[data-theme="light"] .ni{color:var(--text)}
-html[data-theme="light"] .ni:hover,.ni.active{background:var(--s2);color:var(--accent)}
-html[data-theme="light"] .gs-input{background:var(--s2);border-color:var(--border);color:var(--text)}
-html[data-theme="light"] .gs-results{background:var(--surface);border-color:var(--border)}
-html[data-theme="light"] .gs-result-item:hover{background:var(--s2)}
-html[data-theme="light"] .vt-table-wrap{border-color:var(--border)}
-html[data-theme="light"] .vt-table thead th{background:var(--s2);color:var(--muted)}
-html[data-theme="light"] .vt-row td{border-color:var(--border)}
-html[data-theme="light"] .vt-row:hover td{background:rgba(90,79,216,.05)}
-html[data-theme="light"] .vt-chip{background:var(--s3);border-color:var(--border);color:var(--muted)}
-html[data-theme="light"] .vt-chip.on{background:rgba(90,79,216,.12);border-color:var(--accent);color:var(--accent)}
-html[data-theme="light"] .ph{background:transparent}
-html[data-theme="light"] .btn-g{background:var(--s2);border-color:var(--border);color:var(--text)}
-html[data-theme="light"] .btn-g:hover{border-color:var(--accent);color:var(--accent)}
-html[data-theme="light"] .stbl th{background:var(--s2);color:var(--muted)}
-html[data-theme="light"] .stbl td{border-color:var(--border)}
-html[data-theme="light"] .act-item{border-color:var(--border)}
-html[data-theme="light"] .toast{background:var(--surface);color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,.15)}
-html[data-theme="light"] .wd-panel{background:var(--surface);border-color:var(--border)}
-html[data-theme="light"] .wd-hdr{background:var(--s2);border-color:var(--border)}
-html[data-theme="light"] .wd-section{border-color:var(--border)}
-html[data-theme="light"] .chip{background:var(--s2);border-color:var(--border);color:var(--text)}
-html[data-theme="light"] .pos-badge.pb-other{background:rgba(0,0,0,.07);color:var(--muted)}
-html[data-theme="light"] .bottom-nav{background:var(--surface);border-color:var(--border)}
-html[data-theme="light"] .sf{border-color:var(--border);color:var(--muted)}
-html[data-theme="light"] .logo{border-color:var(--border)}
-html[data-theme="light"] .fc-scene{filter:none}
-html[data-theme="light"] .fc-card .fc-front,.fc-card .fc-back{background:var(--card);border:1px solid var(--border)}
-html[data-theme="light"] .sbadge{border:1px solid rgba(0,0,0,.08)}
-html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#c0c4d8}
-html[data-theme="light"] .vt-toggle-track{background:rgba(0,0,0,.18);border-color:rgba(0,0,0,.25)}
-html[data-theme="light"] .topic-chip{background:var(--s3);color:var(--muted)}
-html[data-theme="light"] .topic-modal,.topic-modal-bg.open .topic-modal{background:var(--surface);border-color:var(--border)}
-html[data-theme="light"] code{background:var(--s3);color:var(--text)}
-
 /* ══ GLOBAL SEARCH ══ */
 .gs-wrap{padding:10px 12px;border-bottom:1px solid var(--border);position:relative}
 .gs-input{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:13px;padding:8px 34px 8px 32px;outline:none;transition:border-color .2s;width:100%}
@@ -583,10 +513,6 @@ html[data-theme="light"] code{background:var(--s3);color:var(--text)}
 .gs-result-item:hover{background:var(--s2)}
 .gs-result-cat{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:6px 14px 4px;color:var(--muted);background:var(--s3);border-bottom:1px solid var(--border)}
 .gs-no-results{padding:24px;text-align:center;color:var(--muted);font-size:13px}
-
-/* ══ THEME TOGGLE ══ */
-.theme-btn{background:none;border:1px solid var(--border);border-radius:var(--rs);color:var(--muted);font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:600;padding:5px 11px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:5px}
-.theme-btn:hover{border-color:var(--accent);color:var(--accent)}
 
 /* ══ DICTATION MODE ══ */
 .dict-sent{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:12px}
@@ -633,7 +559,6 @@ html[data-theme="light"] code{background:var(--s3);color:var(--text)}
   #homeStatsRow{grid-template-columns:1fr 1fr!important}
   #fcStats{grid-template-columns:1fr 1fr!important}
   #qmodeGrid{grid-template-columns:1fr 1fr!important}
-  [data-theme="light"] .mob-menu-btn{box-shadow:0 4px 16px rgba(0,0,0,.08)}
 }
 @media(min-width:769px){
   .mob-menu-btn{display:none}
@@ -681,11 +606,48 @@ html[data-theme="light"] code{background:var(--s3);color:var(--text)}
   <div style="padding:8px 10px">
     <button id="profileBtn" onclick="openProfileModal()" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left">👤 default</button>
   </div>
-  <div class="sf" style="display:flex;align-items:center;justify-content:space-between">
-    <span>Viva Lingo v2.3</span>
-    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">☀️ Sáng</button>
+  <div class="sf" style="padding:10px 14px 12px">
+    <div id="cloudAuthArea"></div>
+    <div style="margin-top:6px;font-size:10px;color:var(--muted);opacity:.45;text-align:center">Viva Lingo v2.3</div>
   </div>
 </aside>
+
+<!-- Cloud Auth Modal -->
+<div id="cloudAuthModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;width:100%;max-width:380px;margin:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:17px;font-weight:800">☁️ Tài khoản &amp; Đồng bộ</div>
+      <button onclick="closeCloudAuthModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">✕</button>
+    </div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border)">
+      <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;background:none;border:none;border-bottom:2px solid var(--accent);padding:8px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text);cursor:pointer">Đăng nhập</button>
+      <button id="tabSignup" onclick="switchAuthTab('signup')" style="flex:1;background:none;border:none;border-bottom:2px solid transparent;padding:8px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer">Tạo tài khoản</button>
+    </div>
+    <div id="authFormArea">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px">Email</label>
+        <input id="authEmail" type="email" class="if" placeholder="email@example.com" autocomplete="email">
+      </div>
+      <div style="margin-bottom:18px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px">Mật khẩu</label>
+        <input id="authPassword" type="password" class="if" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()">
+      </div>
+      <div id="authError" style="display:none;color:var(--err);font-size:12.5px;margin-bottom:12px;padding:8px 12px;background:rgba(255,107,138,.08);border-radius:var(--rs)"></div>
+      <button id="authSubmitBtn" class="btn btn-p" style="width:100%;justify-content:center" onclick="submitAuth()">Đăng nhập</button>
+    </div>
+    <!-- Firebase config setup -->
+    <div id="firebaseSetupArea" style="display:none">
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+        Để đồng bộ dữ liệu, bạn cần tạo project Firebase miễn phí tại <strong style="color:var(--text)">firebase.google.com</strong>, bật <em>Authentication (Email/Password)</em> và <em>Firestore</em>, sau đó dán cấu hình vào đây.
+      </div>
+      <textarea id="fbConfigInput" class="if" style="min-height:110px;font-size:11.5px;font-family:monospace" placeholder='{"apiKey":"AIza...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      <div id="fbConfigError" style="display:none;color:var(--err);font-size:12px;margin-top:6px"></div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:12px" onclick="saveFirebaseConfig()">Kết nối Firebase</button>
+      <button class="btn btn-g" style="width:100%;justify-content:center;margin-top:8px;font-size:12px" onclick="showAuthForm()">Tôi đã có cấu hình →</button>
+    </div>
+  </div>
+</div>
 
 <!-- Profile Modal -->
 <div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center">
@@ -6045,48 +6007,6 @@ renderLessonTable();
   setTimeout(()=>selectLesson(key), 100);
   window.history.replaceState(null,'',window.location.pathname);
 })();
-
-// ═══════════════════════════════════════════
-//  THEME TOGGLE (Dark / Light)
-// ═══════════════════════════════════════════
-(function initTheme(){
-  const saved = localStorage.getItem('eh_theme')||'dark';
-  applyTheme(saved);
-})();
-
-function applyTheme(t){
-  const el = document.documentElement;
-  el.setAttribute('data-theme', t);
-  el.classList.toggle('light-mode', t==='light');
-  if(t==='light'){
-    el.style.setProperty('--bg','#f0f2f7');
-    el.style.setProperty('--surface','#ffffff');
-    el.style.setProperty('--s2','#f0f2f7');
-    el.style.setProperty('--s3','#e4e7f0');
-    el.style.setProperty('--border','#d0d4e8');
-    el.style.setProperty('--accent','#5a4fd8');
-    el.style.setProperty('--a2','#e84060');
-    el.style.setProperty('--a3','#22b588');
-    el.style.setProperty('--a4','#c98a00');
-    el.style.setProperty('--text','#1a1a2e');
-    el.style.setProperty('--muted','#5a5a7a');
-    el.style.setProperty('--card','#ffffff');
-    el.style.setProperty('--ok','#22b588');
-    el.style.setProperty('--err','#e84060');
-    el.style.setProperty('--warn','#c98a00');
-  } else {
-    ['--bg','--surface','--s2','--s3','--border','--accent','--a2','--a3','--a4',
-     '--text','--muted','--card','--ok','--err','--warn'].forEach(v=>el.style.removeProperty(v));
-  }
-  const btn = document.getElementById('themeBtn');
-  if(btn) btn.textContent = t==='dark' ? '☀️ Sáng' : '🌙 Tối';
-  localStorage.setItem('eh_theme', t);
-}
-
-function toggleTheme(){
-  const cur = document.documentElement.getAttribute('data-theme')||'dark';
-  applyTheme(cur==='dark'?'light':'dark');
-}
 
 // ═══════════════════════════════════════════
 //  GLOBAL SEARCH
