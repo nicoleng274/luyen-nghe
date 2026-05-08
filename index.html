@@ -1432,6 +1432,7 @@ let rWords     = _lsJSON2('eh_rwords', []);
 let activity   = _lsJSON2('eh_act', []);
 let quizData=[], quizDone=false, curLesson=null, listenDone=false, qMode='fib';
 let _curWord=null;
+let _currentPhraseInfo=null;
 
 function getProfileList() {
   const list = _lsJSON('eh_profiles', ['default']);
@@ -2912,7 +2913,7 @@ async function lookupPhrase(){
   ld.style.display='none';
   const d=info||{t:'expression',vi:'Chưa có trong cơ sở dữ liệu',s:'',ex:''};
   const tc=TMAP[d.t]||'tag-exp', tn=TVNAM[d.t]||d.t;
-  const so={phrase:raw,type:d.t,vi:d.vi,structure:d.s||'',example:d.ex||''};
+  _currentPhraseInfo={phrase:raw,type:d.t,vi:d.vi,structure:d.s||'',example:d.ex||''};
 
   res.innerHTML=`
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
@@ -2921,7 +2922,7 @@ async function lookupPhrase(){
         <span class="tag ${tc}">${tn}</span>
         <button class="audio-btn tts" style="display:inline-flex;margin-left:8px" data-word="${esc(raw)}" onclick="ttsSpeak(this.dataset.word)">🗣️ Phát âm</button>
       </div>
-      <button class="btn btn-g btn-sm" onclick='savePhrase(${JSON.stringify(so).replace(/'/g,"&#39;")})'>💾 Lưu phrase</button>
+      <button class="btn btn-g btn-sm" onclick="savePhrase(_currentPhraseInfo)">💾 Lưu phrase</button>
     </div>
     <div class="info-grid">
       <div class="ib">
