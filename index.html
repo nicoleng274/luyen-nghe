@@ -2099,7 +2099,11 @@ function renderWordPanelContent(entry) {
   const posColors = {noun:'#a89fff',verb:'#3ddba5',adjective:'#ffd166',adverb:'#ff6b8a'};
   const posBg = {noun:'rgba(124,111,255,.1)',verb:'rgba(61,219,165,.1)',adjective:'rgba(255,209,102,.1)',adverb:'rgba(255,107,138,.1)'};
 
-  let html = `<div class="wd-section">
+  let html = '';
+  if(entry.note) {
+    html += `<div style="background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.25);border-radius:10px;padding:10px 13px;margin-bottom:14px;font-size:13px;line-height:1.55;white-space:pre-wrap">${esc(entry.note)}</div>`;
+  }
+  html += `<div class="wd-section">
     <div class="wd-section-title">Định nghĩa</div>`;
 
   for(const [pos, enDefs] of Object.entries(entry.meanings || {})) {
@@ -2144,6 +2148,10 @@ function renderWordPanelContent(entry) {
     <div style="margin-top:16px;display:flex;align-items:center;gap:8px">
       <span style="font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap">Chủ đề:</span>
       <input id="wdTopicInput" class="if" value="${esc(entry.topic||'')}" placeholder="Không có" style="font-size:12.5px;padding:6px 10px;flex:1" onchange="saveWordTopic(this.value)">
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px">📝 Ghi chú cá nhân</div>
+      <textarea id="wdNoteInput" class="if" placeholder="Ghi mẹo, ví dụ riêng, cách nhớ..." style="width:100%;min-height:72px;resize:vertical;font-size:12.5px;padding:8px 10px;font-family:inherit;line-height:1.5;box-sizing:border-box" oninput="saveWordNote(this.value)">${esc(entry.note||'')}</textarea>
     </div>
     <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-g btn-sm" data-word="${esc(entry.word)}" onclick="toggleLearnedFromPanel(this.dataset.word)" id="wdLearnBtn">${entry.learned?'📚 Đánh dấu chưa học':'✅ Đánh dấu đã học'}</button>
@@ -2219,6 +2227,14 @@ function saveWordTopic(topic) {
   vocabList[idx].topic = topic.trim() || undefined;
   localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
   renderVocabTable();
+}
+function saveWordNote(note) {
+  const word = document.getElementById('wdWord')?.textContent?.trim();
+  if(!word) return;
+  const idx = vocabList.findIndex(v=>v.word===word);
+  if(idx<0) return;
+  vocabList[idx].note = note.trim() || undefined;
+  localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
 }
 function clearVocab(){document.getElementById('vocabInput').value='';}
 
