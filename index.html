@@ -19,7 +19,7 @@
   --r:12px;--rs:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .2s,color .2s}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -52,6 +52,8 @@ body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--te
 
 /* ── Cards ── */
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px}
+.card-sm{padding:14px}
+.ap-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0}
 
 /* ── Inputs ── */
 .if{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:14px;padding:11px 14px;outline:none;transition:border-color .2s;width:100%}
@@ -613,7 +615,7 @@ audio{width:100%;accent-color:var(--accent)}
 </aside>
 
 <!-- Cloud Auth Modal -->
-<div id="cloudAuthModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;align-items:center;justify-content:center">
+<div id="cloudAuthModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:600;align-items:center;justify-content:center" onclick="if(event.target===this)closeCloudAuthModal()">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:28px;width:100%;max-width:380px;margin:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <div style="font-size:17px;font-weight:800">☁️ Tài khoản &amp; Đồng bộ</div>
@@ -658,7 +660,7 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
     <div id="profileList" style="margin-bottom:16px"></div>
     <div style="border-top:1px solid var(--border);padding-top:14px">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">TẠO TÀI KHOẢN MỚI</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">TẠO HỒ SƠ MỚI</div>
       <div style="display:flex;gap:8px">
         <input id="newProfileName" class="if" placeholder="Tên người dùng..." style="flex:1" onkeydown="if(event.key==='Enter')createNewProfile()">
         <button class="btn btn-p btn-sm" onclick="createNewProfile()">Tạo</button>
@@ -1593,6 +1595,7 @@ async function apiRelatedPhrases(phrase) {
 // ═══════════════════════════════════════════
 function sp(id) {
   stopTimer();
+  window.scrollTo(0,0);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -2183,6 +2186,7 @@ function toggleLearnedFromPanel(word) {
 function deleteVocab(word) {
   vocabList = vocabList.filter(v => v.word !== word);
   localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
+  localStorage.removeItem(lsk('sr_' + word));
   closeWordPanel();
   renderVocabTable();
   showToast('Đã xóa: ' + word);
@@ -2312,7 +2316,6 @@ function browseTopicVocab(topic) {
 function studyTopicFlashcard(topic) {
   _fcTopicFilter = topic;
   sp('flashcard');
-  setTimeout(initFlashcardPage, 50);
 }
 
 function studyTopicQuiz(topic) {
@@ -3415,7 +3418,7 @@ function renderLessonForm(l) {
               <div style="font-size:12px;color:var(--muted)" id="slot0_label">File câu hỏi,<br>bài tập điền chỗ trống</div>
               <input id="slot0_input" type="file" accept=".pdf,.docx,.doc,.jpg,.jpeg,.png,.webp" style="display:none" onchange="slotFileSelect(0,this.files[0])">
             </div>
-            <div id="slot0_info" style="display:none;margin-top:6px;padding:8px 10px;background:var(--s2);border-radius:var(--rs);font-size:12px;display:none;align-items:center;gap:8px">
+            <div id="slot0_info" style="display:none;margin-top:6px;padding:8px 10px;background:var(--s2);border-radius:var(--rs);font-size:12px;align-items:center;gap:8px">
               <span id="slot0_fname" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
               <span onclick="clearSlot(0)" style="cursor:pointer;color:var(--err);flex-shrink:0">✕</span>
             </div>
@@ -3609,7 +3612,7 @@ function renderLessonForm(l) {
         </div>
       </div>
     </div>
-    <div id="panel_manual">
+    <div id="panel_manual" style="display:none">
       <div style="display:flex;flex-direction:column;gap:14px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
@@ -5925,16 +5928,13 @@ function getFilteredScores() {
   const lessonF = document.getElementById('scFilterLesson')?.value||'';
   const fromF   = document.getElementById('scFilterFrom')?.value||'';
   const toF     = document.getElementById('scFilterTo')?.value||'';
-  return [...scores].reverse().filter(s=>{
+  return [...scores].filter(s=>{
     if(nameF   && !s.student.toLowerCase().includes(nameF)) return false;
     if(lessonF && s.lesson!==lessonF) return false;
     if(fromF || toF){
-      const parts=(s.date||'').split('/');
-      if(parts.length===3){
-        const iso=`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-        if(fromF && iso<fromF) return false;
-        if(toF   && iso>toF)   return false;
-      }
+      const iso = s.date||'';
+      if(fromF && iso<fromF) return false;
+      if(toF   && iso>toF)   return false;
     }
     return true;
   });
@@ -5952,7 +5952,7 @@ function exportScoresCSV() {
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   const suffix = isFiltered ? '_filtered' : '';
-  a.href=url;a.download=`englishhub_scores${suffix}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.href=url;a.download=`vivalingo_scores${suffix}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();URL.revokeObjectURL(url);
   showToast(isFiltered ? `✅ Đã xuất ${data.length}/${scores.length} kết quả (đã lọc)` : '✅ Đã xuất CSV');
 }
@@ -5979,7 +5979,7 @@ function exportScoresXLS() {
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   const suffix = isFiltered ? '_filtered' : '';
-  a.href=url;a.download=`englishhub_scores${suffix}_${new Date().toISOString().slice(0,10)}.xls`;
+  a.href=url;a.download=`vivalingo_scores${suffix}_${new Date().toISOString().slice(0,10)}.xls`;
   a.click();URL.revokeObjectURL(url);
   showToast(isFiltered ? `✅ Đã xuất ${data.length}/${scores.length} kết quả (đã lọc)` : '✅ Đã xuất Excel (.xls)');
 }
@@ -6037,6 +6037,7 @@ function initFirebase(config) {
 (function tryInitFirebase() {
   const cfg = getFirebaseConfig();
   if (cfg) initFirebase(cfg);
+  else updateAuthUI();
 })();
 
 function updateAuthUI() {
@@ -6328,6 +6329,8 @@ function clearGsInput(){
 document.addEventListener('keydown', e => {
   // ESC — close overlays
   if(e.key === 'Escape') {
+    const ca = document.getElementById('cloudAuthModal');
+    if(ca?.style.display !== 'none'){ closeCloudAuthModal(); return; }
     const qr = document.getElementById('qrOverlay');
     if(qr?.classList.contains('open')){ closeQrModal(); return; }
     const wp = document.getElementById('wdPanel');
@@ -6532,16 +6535,16 @@ function printLesson(){
   if(!curLesson){ showToast('Chưa chọn bài nghe','e'); return; }
   const w = window.open('', '_blank');
   if(!w) return;
-  const qs = (curLesson.questions||[]).map((q,i)=>{
-    if(q.type==='fib'){
-      return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${(q.sentence||'').replace(/_+/g,'<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>')}</div>`;
-    }
-    if(q.type==='mc'){
-      const opts = (q.options||[]).map((o,j)=>`<div style="margin-left:24px">${['A','B','C','D'][j]}. ${o}</div>`).join('');
-      return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${q.question||''}<br>${opts}</div>`;
-    }
-    return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${q.question||q.sentence||''}</div>`;
-  }).join('');
+  const fibQs = (curLesson.questions||[]).map((q,i)=>{
+    const txt = (q.text||'').replace(/_+/g,'<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>');
+    return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${txt}</div>`;
+  });
+  const mcQs = (curLesson.mcQuestions||[]).map((q,j)=>{
+    const num = fibQs.length + j + 1;
+    const opts = (q.options||[]).map((o,k)=>`<div style="margin-left:24px">${['A','B','C','D'][k]}. ${o}</div>`).join('');
+    return `<div style="margin-bottom:16px"><strong>${num}.</strong> ${q.text||''}<br>${opts}</div>`;
+  });
+  const qs = [...fibQs, ...mcQs].join('');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>${curLesson.name||'Bài nghe'}</title>
     <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;font-size:14px;line-height:1.8;color:#111}
