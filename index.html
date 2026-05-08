@@ -705,6 +705,18 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
   </div>
 
+  <!-- Daily progress card -->
+  <div class="card" id="homeDailyCard" style="margin-bottom:20px;display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700">📅 Hôm nay</div>
+      <div id="homeDailyMsg" style="font-size:12px;color:var(--muted)"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px" id="homeDailyStats"></div>
+    <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+      <div id="homeDailyBar" style="height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--a3));transition:width .5s;width:0%"></div>
+    </div>
+  </div>
+
   <div class="home-grid">
     <div class="qc qc-p" onclick="sp('vocab')"><div class="qc-bg">📖</div><div class="qc-icon">📖</div><div class="qc-title">Tra từ vựng</div><div class="qc-desc">IPA, nghĩa VI/EN, collocation, audio</div><div class="qc-arrow">↗</div></div>
     <div class="qc qc-g" onclick="sp('phrase')"><div class="qc-bg">💬</div><div class="qc-icon">💬</div><div class="qc-title">Collocation</div><div class="qc-desc">Phrasal verb, cấu trúc ngữ pháp</div><div class="qc-arrow">↗</div></div>
@@ -1667,6 +1679,35 @@ function renderHome() {
   if(hsq) hsq.textContent = scores.length;
   if(hss) hss.textContent = streak || '–';
 
+  // Daily progress card
+  const todayISO = new Date().toISOString().slice(0,10);
+  const todayWords  = vocabList.filter(v=>v.addedAt && new Date(v.addedAt).toISOString().slice(0,10)===todayISO).length;
+  const todayQuizzes= scores.filter(s=>s.date===todayISO||dateToISO(s.date||'')===todayISO).length;
+  const todayFC     = activity.filter(a=>a.date===todayISO&&a.icon==='🃏').length;
+  const goalWords=5, goalQuiz=1, goalFC=1;
+  const pct = Math.min(100, Math.round(((Math.min(todayWords,goalWords)/goalWords) + (Math.min(todayQuizzes,goalFC)/goalQuiz) + (Math.min(todayFC,goalFC)/goalFC))/3*100));
+  const card = document.getElementById('homeDailyCard');
+  if(card) {
+    const hasAny = todayWords>0||todayQuizzes>0||todayFC>0;
+    card.style.display = 'block';
+    const msgs = pct>=100?'🎉 Hoàn thành mục tiêu hôm nay!':pct>=60?'💪 Sắp xong rồi!':hasAny?'📖 Tiếp tục nhé...':'✨ Hãy bắt đầu ngày học mới!';
+    document.getElementById('homeDailyMsg').textContent = msgs;
+    document.getElementById('homeDailyStats').innerHTML = `
+      <div style="text-align:center;padding:8px;background:var(--s2);border-radius:8px">
+        <div style="font-size:20px;font-weight:800;color:var(--accent)">${todayWords}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Từ mới · mục tiêu ${goalWords}</div>
+      </div>
+      <div style="text-align:center;padding:8px;background:var(--s2);border-radius:8px">
+        <div style="font-size:20px;font-weight:800;color:var(--ok)">${todayQuizzes}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Quiz · mục tiêu ${goalQuiz}</div>
+      </div>
+      <div style="text-align:center;padding:8px;background:var(--s2);border-radius:8px">
+        <div style="font-size:20px;font-weight:800;color:var(--warn)">${todayFC}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Flashcard · mục tiêu ${goalFC}</div>
+      </div>`;
+    document.getElementById('homeDailyBar').style.width = pct+'%';
+  }
+
   // Recent words
   const rw=document.getElementById('homeWords');
   if(rw) rw.innerHTML=rWords.length
@@ -1680,7 +1721,8 @@ function renderHome() {
     :'<div class="empty" style="padding:24px"><div class="empty-i" style="font-size:28px">📝</div><div style="font-size:13px">Chưa có hoạt động</div></div>';
 }
 function addAct(icon,bg,text){
-  activity.push({icon,bg,text,time:new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})});
+  const now = new Date();
+  activity.push({icon,bg,text,time:now.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}),date:now.toISOString().slice(0,10)});
   if(activity.length>30)activity.shift();
   localStorage.setItem(lsk('eh_act'),JSON.stringify(activity));
 }
