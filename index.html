@@ -2633,6 +2633,7 @@ async function runBulkTopicImport() {
 
   let done=0, skipped=0;
 
+  try {
   if(isTableMode) {
     // Table entries already have meanings — just insert directly
     const entries = _btTopicData['_TABLE_'];
@@ -2716,6 +2717,12 @@ async function runBulkTopicImport() {
     _btImporting=false; btn.disabled=false;
     closeBulkTopicModal();
   }, 2500);
+  } catch(e) {
+    _btImporting=false; btn.disabled=false;
+    prog.style.display='none';
+    showToast('Lỗi nhập từ: '+e.message,'e');
+    console.error(e);
+  }
 }
 
 // Flashcard topic filter (used by studyTopicFlashcard)
@@ -5010,6 +5017,7 @@ async function submitListen(){
   _listenSubmitting = true;
   listenDone=true;
   let score=0,total=0;
+  try {
   if(qMode==='fib'){
     const qs=curLesson.questions||[]; total=qs.length;
     qs.forEach((q,i)=>{
@@ -5047,7 +5055,9 @@ async function submitListen(){
   if(scores.length > 2000) scores.splice(0, scores.length - 2000);
   localStorage.setItem(lsk('eh_scores'),JSON.stringify(scores));
   try{await fetch(GS_URL,{method:'POST',body:JSON.stringify({...entry,lesson:curLesson.key})});}catch(e){}
-  _listenSubmitting = false;
+  } finally {
+    _listenSubmitting = false;
+  }
 }
 function toggleTranscript(){document.getElementById('transcriptCard').classList.toggle('show');}
 function getYtId(url){const m=url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);return m?m[1]:url;}
