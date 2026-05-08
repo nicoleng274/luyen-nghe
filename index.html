@@ -1599,6 +1599,7 @@ async function apiRelatedPhrases(phrase) {
 // ═══════════════════════════════════════════
 function sp(id) {
   stopTimer();
+  closeMobileMenu();
   window.scrollTo(0,0);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
@@ -4971,6 +4972,7 @@ function setQMode(mode){
 }
 function renderListenQs(){
   const qa=document.getElementById('lQs'); if(!curLesson){qa.innerHTML='';return;}
+  startTimer(); // Track time spent on listen exercise
   if(qMode==='fib'){
     const qs=curLesson.questions||[];
     qa.innerHTML=qs.length?qs.map((q,i)=>`<div class="fib-q" id="fq${i}">
