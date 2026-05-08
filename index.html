@@ -697,7 +697,7 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
     <div class="card" style="text-align:center;padding:16px 12px;cursor:pointer" onclick="sp('scores')">
       <div style="font-size:28px;font-weight:800;line-height:1;color:var(--accent)" id="hsTotalQuiz">0</div>
-      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px">Lượt quiz</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:5px">Bài đã làm</div>
     </div>
     <div class="card" style="text-align:center;padding:16px 12px">
       <div style="font-size:28px;font-weight:800;line-height:1;color:var(--warn)" id="hsStreak">0</div>
@@ -1446,6 +1446,10 @@ function switchProfile(name) {
   scores     = _lsJSON2('eh_scores',  []);
   rWords     = _lsJSON2('eh_rwords',  []);
   activity   = _lsJSON2('eh_act',     []);
+  // Reset all filters so the new profile's page shows clean state
+  _vtFilterActive = 'all'; _vtTopicFilter = ''; _fcTopicFilter = ''; _quizTopicFilter = '';
+  document.querySelectorAll('.vt-chip').forEach(c=>c.classList.remove('on'));
+  document.querySelector('.vt-chip[data-f="all"]')?.classList.add('on');
   renderProfileBtn();
   renderHome(); renderVocabTable(); renderPhraseTable(); renderScores();
   showToast('👤 ' + name);
@@ -1652,13 +1656,13 @@ function renderHome() {
 
   // Recent words
   const rw=document.getElementById('homeWords');
-  rw.innerHTML=rWords.length
+  if(rw) rw.innerHTML=rWords.length
     ?rWords.slice(-14).map(w=>`<span class="chip" data-word="${esc(w)}" onclick="lookupWordDirect(this.dataset.word)">${esc(w)}</span>`).join('')
     :'<span style="color:var(--muted);font-size:13px">Chưa có từ nào</span>';
 
   // Activity feed
   const ra=document.getElementById('homeAct');
-  ra.innerHTML=activity.length
+  if(ra) ra.innerHTML=activity.length
     ?activity.slice(-10).reverse().map(a=>`<div class="act-item"><div class="act-icon" style="background:${a.bg}">${a.icon}</div><div style="flex:1">${a.text}</div><div style="font-size:11.5px;color:var(--muted)">${a.time}</div></div>`).join('')
     :'<div class="empty" style="padding:24px"><div class="empty-i" style="font-size:28px">📝</div><div style="font-size:13px">Chưa có hoạt động</div></div>';
 }
@@ -1686,22 +1690,21 @@ async function lookupWordDirect(word) {
   // Chuyển sang trang vocab nếu chưa ở đó
   if(!document.getElementById('page-vocab').classList.contains('active')) sp('vocab');
   const ld = document.getElementById('vLoad');
-  ld.style.display = 'block';
 
   try {
+    // If word already in vocab list, open panel directly (skip API call)
+    const existing = vocabList.find(v => v.word === word.toLowerCase());
+    if(existing) {
+      openWordPanel(word.toLowerCase());
+      return;
+    }
+
+    ld.style.display = 'block';
     const entries = await apiFreeDict(word.toLowerCase());
     if(!Array.isArray(entries)) throw new Error('not found');
     const parsed = parseFreeDict(entries);
     _curWord = {...parsed, word: word.toLowerCase()};
     ld.style.display = 'none';
-
-    // Check if already in list
-    const existing = vocabList.find(v => v.word === word.toLowerCase());
-    if(existing) {
-      // Just open the panel for existing word
-      openWordPanel(word.toLowerCase());
-      return;
-    }
 
     // Auto-save to list then open panel
     await autoSaveAndOpen(word.toLowerCase(), parsed);
@@ -3003,7 +3006,7 @@ function startQuiz() {
 function updateQP() {
   const f=quizData.filter((_,i)=>{const el=document.getElementById(`qa${i}`);return el&&el.value.trim();}).length;
   document.getElementById('qPTxt').textContent=`${f}/${quizData.length}`;
-  document.getElementById('qPBar').style.width=`${f/quizData.length*100}%`;
+  document.getElementById('qPBar').style.width=`${f/Math.max(quizData.length,1)*100}%`;
 }
 
 // Mode 1: Điền từ
@@ -3055,7 +3058,7 @@ function selectMCOpt(qi,oi,correct) {
     :'<span style="color:var(--err)">✖ Sai</span>';
   const answered=quizData.filter((_,i)=>document.getElementById(`qi${i}`)?.querySelector('.opt-ok')).length;
   document.getElementById('qPTxt').textContent=`${answered}/${quizData.length}`;
-  document.getElementById('qPBar').style.width=`${answered/quizData.length*100}%`;
+  document.getElementById('qPBar').style.width=`${answered/Math.max(quizData.length,1)*100}%`;
 }
 
 // Mode 3: Nối từ
@@ -3080,7 +3083,7 @@ function renderMatchQuiz() {
 
 function matchClick(side,idx) {
   const el=document.getElementById((side==='L'?'ml':'mr')+idx);
-  if(el.classList.contains('matched')) return;
+  if(!el||el.classList.contains('matched')) return;
   if(!_matchSelected) {
     document.querySelectorAll('.match-item.selected').forEach(e=>e.classList.remove('selected'));
     el.classList.add('selected'); _matchSelected={side,idx,el};
@@ -5027,9 +5030,10 @@ async function submitListen(){
   document.getElementById('lResult').classList.add('show');
   document.getElementById('lSubmitBtn').disabled=true;
   const name=document.getElementById('lName').value,cls=document.getElementById('lClass').value;
-  showToast(`🎉 ${score}/${total} (${pct}%)`);
-  addAct('🎧','rgba(255,209,102,.2)',`Luyện nghe: ${esc(name||'HS')} – ${score}/${total}`);
-  const entry={student:name||'Ẩn danh',class:cls||'–',lesson:curLesson.name,score,total,date:new Date().toISOString().slice(0,10),time:new Date().toLocaleTimeString('vi-VN')};
+  const duration=getTimerLabel();
+  showToast(`🎉 ${score}/${total} (${pct}%) · ${duration}`);
+  addAct('🎧','rgba(255,209,102,.2)',`Luyện nghe: ${esc(name||'HS')} – ${score}/${total} · ${duration}`);
+  const entry={student:name||'Ẩn danh',class:cls||'–',lesson:curLesson.name,score,total,duration,date:new Date().toISOString().slice(0,10),time:new Date().toLocaleTimeString('vi-VN')};
   scores.push(entry);
   if(scores.length > 2000) scores.splice(0, scores.length - 2000);
   localStorage.setItem(lsk('eh_scores'),JSON.stringify(scores));
