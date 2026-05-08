@@ -1750,23 +1750,25 @@ async function autoSaveAndOpen(word, parsed) {
   openWordPanel(word);
 
   // Translate each def async and update
-  for(const [pos, defs] of Object.entries(parsed.posGroups)) {
-    const translated = [];
-    for(const d of defs) {
-      const vi = await apiTranslateOne(d.def);
-      translated.push(vi);
+  try {
+    for(const [pos, defs] of Object.entries(parsed.posGroups)) {
+      const translated = [];
+      for(const d of defs) {
+        const vi = await apiTranslateOne(d.def);
+        translated.push(vi);
+      }
+      entry.viMeanings[pos] = translated;
     }
-    entry.viMeanings[pos] = translated;
-  }
-  // After all translations, update storage + re-render
-  const idx = vocabList.findIndex(v => v.word === word);
-  if(idx >= 0) { vocabList[idx] = entry; localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList)); }
-  renderVocabTable();
-  // Refresh panel if still open for this word
-  if(document.getElementById('wdPanel').classList.contains('open') &&
-     document.getElementById('wdWord').textContent === word) {
-    renderWordPanelContent(entry);
-  }
+    // After all translations, update storage + re-render
+    const idx = vocabList.findIndex(v => v.word === word);
+    if(idx >= 0) { vocabList[idx] = entry; localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList)); }
+    renderVocabTable();
+    // Refresh panel if still open for this word
+    if(document.getElementById('wdPanel').classList.contains('open') &&
+       document.getElementById('wdWord').textContent === word) {
+      renderWordPanelContent(entry);
+    }
+  } catch { /* translation failed silently — word is already saved with EN defs */ }
 }
 
 function parseFreeDict(entries) {
@@ -3292,7 +3294,9 @@ async function adminLogin() {
   const pw = prompt('🔒 Nhập mật khẩu quản trị:');
   if(pw === null) return;
 
-  const hash = await hashPassword(pw);
+  let hash;
+  try { hash = await hashPassword(pw); }
+  catch(e) { showToast('Lỗi mã hóa, thử dùng HTTPS','e'); return; }
 
   // So sánh hash — mật khẩu gốc không bao giờ lộ ra
   if(hash === ADMIN_HASH) {
@@ -6162,7 +6166,7 @@ function showAuthError(msg) {
 
 async function logoutUser() {
   if (!_fbAuth) return;
-  await _fbAuth.signOut();
+  try { await _fbAuth.signOut(); } catch(e) { console.error(e); }
   showToast('Đã đăng xuất');
 }
 
