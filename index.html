@@ -1116,6 +1116,11 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
     <div class="qprog"><div class="qprog-bar" id="qPBar" style="width:0"></div></div>
     <div id="qList"></div>
+    <div id="qWrongSection" style="display:none;margin-top:18px;padding:14px 16px;background:rgba(255,107,138,.08);border:1px solid rgba(255,107,138,.2);border-radius:12px">
+      <div style="font-size:13px;font-weight:700;color:var(--err);margin-bottom:10px">🔴 Từ cần ôn lại (<span id="qWrongCount">0</span> từ)</div>
+      <div id="qWrongList" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px"></div>
+      <button class="btn btn-sm" style="background:rgba(255,107,138,.15);color:var(--err);border:1px solid rgba(255,107,138,.3)" onclick="retryWrongWords()">🔄 Quiz lại từ sai này</button>
+    </div>
   </div>
 
   <div id="quizEmpty" class="empty">
@@ -1436,7 +1441,7 @@ let phraseList = _lsJSON2('eh_phrases', []);
 let scores     = _lsJSON2('eh_scores', []);
 let rWords     = _lsJSON2('eh_rwords', []);
 let activity   = _lsJSON2('eh_act', []);
-let quizData=[], quizDone=false, curLesson=null, listenDone=false, qMode='fib';
+let quizData=[], quizDone=false, curLesson=null, listenDone=false, qMode='fib', _quizWrongWords=[];
 let _curWord=null;
 let _currentPhraseInfo=null;
 
@@ -3011,7 +3016,8 @@ function startQuiz() {
   const pool = _quizTopicFilter ? vocabList.filter(v=>v.topic===_quizTopicFilter) : [...vocabList];
   _quizTopicFilter = ''; // reset after use
   if(pool.length<4){showToast('Cần ít nhất 4 từ trong chủ đề này!','e');return;}
-  quizDone=false;
+  quizDone=false; _quizWrongWords=[];
+  document.getElementById('qWrongSection').style.display='none';
   const cnt=parseInt(document.getElementById('qCount').value);
   quizData=pool.sort(()=>Math.random()-.5).slice(0,Math.min(cnt,pool.length));
   document.getElementById('quizEmpty').style.display='none';
@@ -3187,6 +3193,25 @@ function ttsSpeakDone(word, cb) {
 }
 
 // Check (fill + listen text-based; MC auto-checked inline)
+function retryWrongWords() {
+  if(!_quizWrongWords.length) return;
+  quizDone=false;
+  quizData=[..._quizWrongWords].sort(()=>Math.random()-.5);
+  _quizWrongWords=[];
+  document.getElementById('qWrongSection').style.display='none';
+  document.getElementById('quizEmpty').style.display='none';
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('qCheckBtn').textContent='✅ Kiểm tra';
+  document.getElementById('qCheckBtn').disabled=false;
+  document.getElementById('qPTxt').textContent=`0/${quizData.length}`;
+  document.getElementById('qPBar').style.width='0';
+  if(_quizMode==='fill') renderFillQuiz();
+  else if(_quizMode==='mc') renderMCQuiz();
+  else renderFillQuiz(); // fallback to fill for wrong-word retry
+  const limit=parseInt(document.getElementById('qTimeLimit')?.value||'0');
+  if(limit>0) startQuizTimer(limit);
+}
+
 async function checkQuiz() {
   if(quizDone){startQuiz();return;}
   if(_quizMode==='match'){
@@ -3203,7 +3228,7 @@ async function checkQuiz() {
     await saveQuizScore(score,quizData.length);
     document.getElementById('qCheckBtn').textContent='🔄 Làm lại'; quizDone=true; return;
   }
-  quizDone=true; let score=0;
+  quizDone=true; let score=0; _quizWrongWords=[];
   quizData.forEach((item,i)=>{
     const inp=document.getElementById(`qa${i}`),res=document.getElementById(`qr${i}`),ipa=document.getElementById(`qipa${i}`);
     if(!inp)return;
@@ -3211,12 +3236,17 @@ async function checkQuiz() {
     inp.disabled=true;
     const qi=document.getElementById(`qi${i}`);
     if(user===correct){score++;qi?.classList.add('correct');res.innerHTML='<span style="color:var(--ok)">✅ Đúng</span>';}
-    else{qi?.classList.add('wrong');res.innerHTML=`<span style="color:var(--err)">✖ Bạn: <em>${esc(user)||'(để trống)'}</em></span> <span style="color:var(--ok)">→ Đúng: <strong>${esc(correct)}</strong></span>`;}
+    else{qi?.classList.add('wrong');res.innerHTML=`<span style="color:var(--err)">✖ Bạn: <em>${esc(user)||'(để trống)'}</em></span> <span style="color:var(--ok)">→ Đúng: <strong>${esc(correct)}</strong></span>`;_quizWrongWords.push(item);}
     if(item.ipa&&ipa)ipa.textContent=item.ipa;
   });
   document.getElementById('qPBar').style.width='100%';
   await saveQuizScore(score,quizData.length);
   document.getElementById('qCheckBtn').textContent='🔄 Làm lại';
+  if(_quizWrongWords.length) {
+    document.getElementById('qWrongCount').textContent=_quizWrongWords.length;
+    document.getElementById('qWrongList').innerHTML=_quizWrongWords.map(w=>`<span class="chip" style="background:rgba(255,107,138,.15);color:var(--err)" data-word="${esc(w.word)}" onclick="openWordPanel(this.dataset.word)">${esc(w.word)}</span>`).join('');
+    document.getElementById('qWrongSection').style.display='block';
+  }
 }
 
 
