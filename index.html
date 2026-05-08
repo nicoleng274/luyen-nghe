@@ -2299,14 +2299,21 @@ function renderTopicsPage() {
   grid.innerHTML = keys.map(t => {
     const words = topics[t];
     const learned = words.filter(v=>v.learned).length;
+    const due    = words.filter(v=>isDue(v.word)).length;
     const pct = words.length ? Math.round(learned/words.length*100) : 0;
     const barColor = pct>=80?'var(--ok)':pct>=40?'var(--warn)':'var(--accent)';
     const deleteBtn = isAdmin
       ? `<button data-t="${esc(t)}" onclick="deleteTopicWords(this.dataset.t)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0;opacity:.45;transition:.2s" onmouseover="this.style.opacity=1;this.style.color='var(--err)'" onmouseout="this.style.opacity=.45;this.style.color='var(--muted)'">🗑</button>`
       : '';
+    const dueBadge = due>0
+      ? `<span style="font-size:11px;font-weight:700;color:var(--err);background:rgba(255,107,138,.13);border:1px solid rgba(255,107,138,.25);padding:2px 7px;border-radius:20px;margin-left:6px">🔥 ${due} cần ôn</span>`
+      : '';
+    const dueBtn = due>0
+      ? `<button class="btn btn-sm" style="background:rgba(255,107,138,.13);color:var(--err);border:1px solid rgba(255,107,138,.25)" data-topic="${esc(t)}" onclick="studyTopicDue(this.dataset.topic)">🔥 Ôn ngay</button>`
+      : '';
     return `<div class="card" style="padding:18px;cursor:default">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
-        <div style="font-size:15px;font-weight:700;line-height:1.35">${esc(t)}</div>
+        <div style="font-size:15px;font-weight:700;line-height:1.35">${esc(t)}${dueBadge}</div>
         ${deleteBtn}
       </div>
       <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">${words.length} từ · ${learned} đã học (${pct}%)</div>
@@ -2314,6 +2321,7 @@ function renderTopicsPage() {
         <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .5s"></div>
       </div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${dueBtn}
         <button class="btn btn-s btn-sm" data-topic="${esc(t)}" onclick="studyTopicFlashcard(this.dataset.topic)">🃏 Flashcard</button>
         <button class="btn btn-g btn-sm" data-topic="${esc(t)}" onclick="studyTopicQuiz(this.dataset.topic)">🧠 Quiz</button>
         <button class="btn btn-g btn-sm" data-topic="${esc(t)}" onclick="browseTopicVocab(this.dataset.topic)">📖 Từ vựng</button>
@@ -2355,6 +2363,13 @@ function browseTopicVocab(topic) {
 function studyTopicFlashcard(topic) {
   _fcTopicFilter = topic;
   sp('flashcard');
+}
+
+function studyTopicDue(topic) {
+  // Start flashcard session with only due cards from this topic
+  _fcTopicFilter = topic;
+  sp('flashcard');
+  startFlashcards('due');
 }
 
 function studyTopicQuiz(topic) {
