@@ -6539,10 +6539,29 @@ function checkDictSentence(idx){
   const fb = document.getElementById('dfeedback_'+idx);
   const ans = document.getElementById('danswer_'+idx);
   const sent = document.getElementById('dsent_'+idx);
-  if(fb) fb.innerHTML = `${feedback}${extra ? ' '+extra:''} <span style="font-size:12px;color:var(--muted);margin-left:8px">(${pct}%)</span>`;
+  const retryBtn = pct < 100
+    ? `<button class="btn btn-g btn-sm" style="margin-top:6px;font-size:12px" onclick="retryDictSentence(${idx})">🔄 Thử lại</button>`
+    : '';
+  if(fb) fb.innerHTML = `${feedback}${extra ? ' '+extra:''} <span style="font-size:12px;color:var(--muted);margin-left:8px">(${pct}%)</span>${retryBtn}`;
   if(ans) { ans.classList.toggle('show', pct<100); }
   if(sent){ sent.classList.toggle('dict-correct', pct>=80); sent.classList.toggle('dict-wrong', pct<80); }
   inp.disabled = true;
+}
+
+function retryDictSentence(idx) {
+  const d = _dictData[idx];
+  if(!d) return;
+  d.checked = false;
+  d.userAnswer = '';
+  const inp  = document.getElementById('dinput_'+idx);
+  const fb   = document.getElementById('dfeedback_'+idx);
+  const ans  = document.getElementById('danswer_'+idx);
+  const sent = document.getElementById('dsent_'+idx);
+  if(inp)  { inp.disabled = false; inp.value = ''; inp.focus(); }
+  if(fb)   fb.innerHTML = '';
+  if(ans)  ans.classList.remove('show');
+  if(sent) { sent.classList.remove('dict-correct','dict-wrong'); }
+  dictPlaySentence(idx);
 }
 
 function checkAllDictation(){
