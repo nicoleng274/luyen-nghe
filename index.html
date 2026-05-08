@@ -6568,23 +6568,24 @@ function printLesson(){
   if(!curLesson){ showToast('Chưa chọn bài nghe','e'); return; }
   const w = window.open('', '_blank');
   if(!w) return;
+  const lessonName = esc(curLesson.name||'Bài nghe');
   const fibQs = (curLesson.questions||[]).map((q,i)=>{
-    const txt = (q.text||'').replace(/_+/g,'<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>');
+    const txt = esc(q.text||'').replace(/_+/g,'<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>');
     return `<div style="margin-bottom:16px"><strong>${i+1}.</strong> ${txt}</div>`;
   });
   const mcQs = (curLesson.mcQuestions||[]).map((q,j)=>{
     const num = fibQs.length + j + 1;
-    const opts = (q.options||[]).map((o,k)=>`<div style="margin-left:24px">${['A','B','C','D'][k]}. ${o}</div>`).join('');
-    return `<div style="margin-bottom:16px"><strong>${num}.</strong> ${q.text||''}<br>${opts}</div>`;
+    const opts = (q.options||[]).map((o,k)=>`<div style="margin-left:24px">${['A','B','C','D'][k]}. ${esc(o)}</div>`).join('');
+    return `<div style="margin-bottom:16px"><strong>${num}.</strong> ${esc(q.text||'')}<br>${opts}</div>`;
   });
   const qs = [...fibQs, ...mcQs].join('');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <title>${curLesson.name||'Bài nghe'}</title>
+    <title>${lessonName}</title>
     <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;font-size:14px;line-height:1.8;color:#111}
     h1{font-size:20px;margin-bottom:4px}h2{font-size:14px;color:#555;font-weight:normal;margin-bottom:24px;border-bottom:1px solid #ddd;padding-bottom:8px}
     u{border-bottom:2px solid #333;text-decoration:none;display:inline-block;min-width:80px}
     @media print{body{margin:20px}}</style></head>
-    <body><h1>${curLesson.name||'Bài nghe'}</h1>
+    <body><h1>${lessonName}</h1>
     <h2>Lớp: __________________ &nbsp; Tên: __________________ &nbsp; Ngày: __________________</h2>
     ${qs||'<p>Không có câu hỏi</p>'}
     <script>window.onload=()=>window.print()<\/script></body></html>`);
