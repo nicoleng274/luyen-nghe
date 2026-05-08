@@ -1599,9 +1599,14 @@ function sp(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  ['home','vocab','topics','flashcard','phrase','quiz','listen','scores'].forEach((p,i)=>{
+  const pages = ['home','vocab','topics','flashcard','phrase','quiz','listen','scores'];
+  const bnPages = ['home','vocab','topics','flashcard','quiz','listen'];
+  pages.forEach((p,i)=>{
     if(p===id) document.querySelectorAll('.ni')[i].classList.add('active');
   });
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
+  const bnIdx = bnPages.indexOf(id);
+  if(bnIdx>=0) document.querySelectorAll('.bn-item')[bnIdx]?.classList.add('active');
   if(id==='listen') renderLessonTable();
   if(id==='scores') renderScores();
   if(id==='home')   renderHome();
