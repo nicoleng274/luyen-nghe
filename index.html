@@ -3379,6 +3379,7 @@ function openAddLesson() {
 }
 
 function editLesson(key) {
+  if(!LESSONS[key]) { showToast('Bài không tồn tại','e'); return; }
   _editingKey = key;
   document.getElementById('lessonModalTitle').textContent = `✏️ Sửa: ${LESSONS[key].name}`;
   renderLessonForm(LESSONS[key]);
@@ -4018,6 +4019,7 @@ Trả về JSON THUẦN (không có markdown, không có backtick):
 
 // Fallback: tạo FIB từ câu trong transcript (không cần API)
 function fallbackGenerateQuestions(transcript, fibN, mcN) {
+  if(!transcript||transcript.trim().length<10) return {suggestedName:'New Lesson',suggestedIcon:'🎧',questions:[],mcQuestions:[]};
   const sentences = transcript.match(/[^.!?]+[.!?]+/g)||[];
   const words = transcript.match(/\b[a-zA-Z]{4,}\b/g)||[];
   const uniqueWords = [...new Set(words.map(w=>w.toLowerCase()))].slice(0,20);
@@ -4100,8 +4102,8 @@ function saveAiLesson() {
   });
 
   const lesson = {
-    name, icon:document.getElementById('ai_icon').value||'🎧',
-    level:document.getElementById('ai_level').value,
+    name, icon:document.getElementById('ai_icon')?.value||'🎧',
+    level:document.getElementById('ai_level')?.value||'Intermediate',
     desc:'', youtube:isYt?media:'', audio:!isYt?media:'',
     transcript:_aiGeneratedData?._transcript||'', questions, mcQuestions
   };
@@ -4342,8 +4344,9 @@ async function processUploadedFile() {
     document.getElementById('up_progress').style.display='none';
     showToast('Lỗi: '+e.message,'e');
     console.error(e);
+  } finally {
+    document.getElementById('up_process_btn').disabled=false;
   }
-  document.getElementById('up_process_btn').disabled=false;
 }
 
 // Đọc file → text (dùng đúng thư viện theo loại)
