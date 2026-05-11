@@ -644,32 +644,43 @@ audio{width:100%;accent-color:var(--accent)}
       <div style="font-size:17px;font-weight:800">☁️ Tài khoản &amp; Đồng bộ</div>
       <button onclick="closeCloudAuthModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">✕</button>
     </div>
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border)">
-      <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;background:none;border:none;border-bottom:2px solid var(--accent);padding:8px;font-family:inherit;font-size:13px;font-weight:700;color:var(--text);cursor:pointer">Đăng nhập</button>
-      <button id="tabSignup" onclick="switchAuthTab('signup')" style="flex:1;background:none;border:none;border-bottom:2px solid transparent;padding:8px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer">Tạo tài khoản</button>
-    </div>
     <div id="authFormArea">
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px">Email</label>
-        <input id="authEmail" type="email" class="if" placeholder="email@example.com" autocomplete="email">
+      <button onclick="signInWithGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:16px">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.79-.07-1.54-.19-2.27h-11.3v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12.255 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96h-3.98v3.09C3.515 21.3 7.565 24 12.255 24z"/><path fill="#FBBC05" d="M5.525 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62h-3.98a11.86 11.86 0 000 10.76l3.98-3.09z"/><path fill="#EA4335" d="M12.255 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.205 1.19 15.495 0 12.255 0c-4.69 0-8.74 2.7-10.71 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
+        Đăng nhập với Google
+      </button>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:11.5px;color:var(--muted)">hoặc dùng email</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
       </div>
-      <div style="margin-bottom:18px">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px">Mật khẩu</label>
-        <input id="authPassword" type="password" class="if" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()">
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid var(--border)">
+        <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;background:none;border:none;border-bottom:2px solid var(--accent);padding:6px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text);cursor:pointer">Đăng nhập</button>
+        <button id="tabSignup" onclick="switchAuthTab('signup')" style="flex:1;background:none;border:none;border-bottom:2px solid transparent;padding:6px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer">Tạo tài khoản</button>
+      </div>
+      <div style="margin-bottom:10px">
+        <input id="authEmail" type="email" class="if" placeholder="Email" autocomplete="email" style="font-size:13px">
+      </div>
+      <div style="margin-bottom:14px">
+        <input id="authPassword" type="password" class="if" placeholder="Mật khẩu" autocomplete="current-password" style="font-size:13px" onkeydown="if(event.key==='Enter')submitAuth()">
       </div>
       <div id="authError" style="display:none;color:var(--err);font-size:12.5px;margin-bottom:12px;padding:8px 12px;background:rgba(255,107,138,.08);border-radius:var(--rs)"></div>
       <button id="authSubmitBtn" class="btn btn-p" style="width:100%;justify-content:center" onclick="submitAuth()">Đăng nhập</button>
     </div>
     <!-- Firebase config setup -->
     <div id="firebaseSetupArea" style="display:none">
-      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-        Để đồng bộ dữ liệu, bạn cần tạo project Firebase miễn phí tại <strong style="color:var(--text)">firebase.google.com</strong>, bật <em>Authentication (Email/Password)</em> và <em>Firestore</em>, sau đó dán cấu hình vào đây.
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:12px">
+        Tạo project Firebase miễn phí tại <strong style="color:var(--text)">firebase.google.com</strong>, bật <em>Authentication → Google</em> và <em>Firestore</em>, rồi dán config vào đây.
       </div>
-      <textarea id="fbConfigInput" class="if" style="min-height:110px;font-size:11.5px;font-family:monospace" placeholder='{"apiKey":"AIza...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      <textarea id="fbConfigInput" class="if" style="min-height:100px;font-size:11.5px;font-family:monospace" placeholder='{"apiKey":"AIza...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      <div style="margin-top:10px">
+        <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px">Email admin (bạn) — có quyền đăng tải nội dung lên server</label>
+        <input id="fbAdminEmailInput" type="email" class="if" style="font-size:12.5px" placeholder="your@email.com">
+      </div>
       <div id="fbConfigError" style="display:none;color:var(--err);font-size:12px;margin-top:6px"></div>
       <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:12px" onclick="saveFirebaseConfig()">Kết nối Firebase</button>
-      <button class="btn btn-g" style="width:100%;justify-content:center;margin-top:8px;font-size:12px" onclick="showAuthForm()">Tôi đã có cấu hình →</button>
+      <button class="btn btn-g" style="width:100%;justify-content:center;margin-top:8px;font-size:12px" onclick="showAuthForm()">Đã có cấu hình, đăng nhập ngay →</button>
     </div>
   </div>
 </div>
@@ -823,6 +834,8 @@ audio{width:100%;accent-color:var(--accent)}
       <div style="font-size:13px">Tra từ ở ô tìm kiếm phía trên để thêm vào danh sách</div>
     </div>
   </div>
+  <!-- Shared vocab packs from server -->
+  <div id="sharedVocabSection" style="display:none;margin-top:20px;padding:16px;border-radius:12px;background:var(--s2);border:1px solid var(--border)"></div>
 </section>
 
 <!-- Topic import modal -->
@@ -1195,6 +1208,8 @@ audio{width:100%;accent-color:var(--accent)}
       <tbody id="lessonTbody"></tbody>
     </table>
   </div>
+  <!-- Shared lessons from server -->
+  <div id="sharedLessonsSection" style="display:none;margin-bottom:20px"></div>
 
   <!-- Player + questions (hiện khi chọn bài) -->
   <div id="listenContent" style="display:none">
@@ -1749,11 +1764,12 @@ function sp(id) {
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
   const bnIdx = bnPages.indexOf(id);
   if(bnIdx>=0) document.querySelectorAll('.bn-item')[bnIdx]?.classList.add('active');
-  if(id==='listen') renderLessonTable();
+  if(id==='listen') { renderLessonTable(); renderSharedLessonsSection(); }
   if(id==='scores') renderScores();
   if(id==='home')   renderHome();
   if(id==='flashcard') initFlashcardPage();
   if(id==='topics') renderTopicsPage();
+  if(id==='vocab')  renderSharedVocabSection();
   if(id==='toeic')  renderToeicBooks();
 }
 
@@ -2482,6 +2498,7 @@ function renderTopicsPage() {
         <button class="btn btn-s btn-sm" data-topic="${esc(t)}" onclick="studyTopicFlashcard(this.dataset.topic)">🃏 Flashcard</button>
         <button class="btn btn-g btn-sm" data-topic="${esc(t)}" onclick="studyTopicQuiz(this.dataset.topic)">🧠 Quiz</button>
         <button class="btn btn-g btn-sm" data-topic="${esc(t)}" onclick="browseTopicVocab(this.dataset.topic)">📖 Từ vựng</button>
+        ${isCloudAdmin()?`<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:rgba(61,219,165,.12);border:1px solid rgba(61,219,165,.3);color:var(--ok)" data-topic="${esc(t)}" onclick="publishVocabPack(this.dataset.topic)">📤 Đăng</button>`:''}
       </div>
     </div>`;
   }).join('') + (isAdmin && vocabList.filter(v=>!v.topic).length ? `<div class="card" style="padding:18px;opacity:.6">
@@ -5130,6 +5147,8 @@ function renderLessonTable(){
         <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
           <button class="btn btn-p btn-sm" data-key="${esc(key)}" onclick="selectLesson(this.dataset.key)">▶ Học</button>
           <button class="btn btn-g btn-sm" data-key="${esc(key)}" data-name="${esc(l.name)}" onclick="event.stopPropagation();showLessonQR(this.dataset.key,this.dataset.name)">📱 QR</button>
+          ${isCloudAdmin()?`<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:rgba(61,219,165,.12);border:1px solid rgba(61,219,165,.3);color:var(--ok)" data-key="${esc(key)}" onclick="event.stopPropagation();publishLesson(this.dataset.key)">📤 Đăng</button>`:''}
+          ${_adminUnlocked&&!isCloudAdmin()?`<button class="btn btn-g btn-sm" data-key="${esc(key)}" onclick="event.stopPropagation();confirmDeleteLesson(this.dataset.key)">🗑</button>`:''}
         </div>
       </td>
     </tr>`).join('');
@@ -6329,10 +6348,18 @@ function updateAuthUI() {
     area.innerHTML = `<button onclick="openCloudAuthModal('login')" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:7px">👤 <span>Đăng nhập tài khoản</span></button>`;
   } else {
     const email = _currentUser.email || '';
-    const short = email.length > 22 ? email.slice(0,20)+'…' : email;
+    const name  = _currentUser.displayName || '';
+    const photo = _currentUser.photoURL || '';
+    const short = (name || email).length > 22 ? (name || email).slice(0,20)+'…' : (name || email);
+    const adminBadge = isCloudAdmin() ? '<span style="font-size:10px;background:rgba(255,209,102,.25);color:#c9a100;border-radius:4px;padding:1px 6px;font-weight:700">👑 Admin</span>' : '';
     area.innerHTML = `<div style="padding:8px 12px;border-radius:8px;border:1px solid rgba(124,111,255,.3);background:rgba(124,111,255,.08)">
-      <div style="font-size:11.5px;color:var(--accent);font-weight:700;margin-bottom:2px">✅ Đã đăng nhập</div>
-      <div style="font-size:12px;color:var(--text);margin-bottom:6px;word-break:break-all">${esc(short)}</div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+        ${photo ? `<img src="${esc(photo)}" style="width:26px;height:26px;border-radius:50%;object-fit:cover">` : '<span style="font-size:18px">👤</span>'}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(short)} ${adminBadge}</div>
+          <div style="font-size:10.5px;color:var(--muted)">✅ Đã đăng nhập</div>
+        </div>
+      </div>
       <div style="display:flex;gap:6px">
         <button onclick="logoutUser()" style="flex:1;background:rgba(255,107,138,.12);border:1px solid rgba(255,107,138,.25);color:var(--err);font-family:inherit;font-size:11.5px;font-weight:600;border-radius:6px;padding:4px 8px;cursor:pointer">Đăng xuất</button>
         <div id="syncStatus" style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px"></div>
@@ -6348,6 +6375,8 @@ function openCloudAuthModal(mode) {
   if (mode === 'setup' || !cfg) {
     document.getElementById('firebaseSetupArea').style.display = 'block';
     document.getElementById('authFormArea').style.display = 'none';
+    const ae = document.getElementById('fbAdminEmailInput');
+    if (ae) ae.value = localStorage.getItem('eh_admin_email') || '';
   } else {
     showAuthForm();
   }
@@ -6428,16 +6457,42 @@ function showAuthError(msg) {
 async function logoutUser() {
   if (!_fbAuth) return;
   try { await _fbAuth.signOut(); } catch(e) { console.error(e); }
+  sharedToeicBooks = []; sharedVocabPacks = []; sharedLessons = [];
+  renderToeicBooks(); renderHome();
   showToast('Đã đăng xuất');
+}
+
+async function signInWithGoogle() {
+  if (!_fbAuth) { showToast('Firebase chưa được cấu hình','e'); openCloudAuthModal('setup'); return; }
+  const btn = document.querySelector('[onclick="signInWithGoogle()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang xử lý...'; }
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await _fbAuth.signInWithPopup(provider);
+    closeCloudAuthModal();
+    showToast('✅ Đăng nhập thành công!');
+  } catch(e) {
+    const msgs = {'auth/popup-closed-by-user':'Đã huỷ đăng nhập.','auth/network-request-failed':'Lỗi mạng, thử lại sau.'};
+    showAuthError(msgs[e.code] || e.message || 'Đăng nhập thất bại');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.79-.07-1.54-.19-2.27h-11.3v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12.255 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96h-3.98v3.09C3.515 21.3 7.565 24 12.255 24z"/><path fill="#FBBC05" d="M5.525 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62h-3.98a11.86 11.86 0 000 10.76l3.98-3.09z"/><path fill="#EA4335" d="M12.255 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C18.205 1.19 15.495 0 12.255 0c-4.69 0-8.74 2.7-10.71 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/></svg> Đăng nhập với Google'; }
+  }
+}
+
+function isCloudAdmin() {
+  const adminEmail = localStorage.getItem('eh_admin_email');
+  return !!(adminEmail && _currentUser && _currentUser.email === adminEmail);
 }
 
 function saveFirebaseConfig() {
   const raw = (document.getElementById('fbConfigInput')||{}).value?.trim();
+  const adminEmail = (document.getElementById('fbAdminEmailInput')||{}).value?.trim();
   const errEl = document.getElementById('fbConfigError');
   try {
     const cfg = JSON.parse(raw);
     if (!cfg.apiKey || !cfg.projectId) throw new Error('Thiếu apiKey hoặc projectId');
     localStorage.setItem('firebase_config', JSON.stringify(cfg));
+    if (adminEmail) localStorage.setItem('eh_admin_email', adminEmail);
     const ok = initFirebase(cfg);
     if (ok) {
       if (errEl) errEl.style.display = 'none';
@@ -6503,6 +6558,154 @@ async function loadFromCloud() {
     renderHome(); renderVocabTable(); renderPhraseTable(); renderScores(); renderTopicsPage();
     showToast('☁️ Dữ liệu đã được tải từ cloud');
   } catch(e) { console.error('Load from cloud error:', e); }
+  // Also load shared public content
+  loadSharedContent();
+}
+
+// ─── Shared public content (admin publishes → all users see) ─────────────────
+async function loadSharedContent() {
+  if (!_currentUser || !_fbDB) return;
+  await Promise.all([loadSharedToeic(), loadSharedVocabPacks(), loadSharedLessons()]);
+}
+
+async function loadSharedToeic() {
+  try {
+    const snap = await _fbDB.collection('shared_toeic').orderBy('uploadedAt','desc').get();
+    sharedToeicBooks = snap.docs.map(d => { const data=d.data(); return {...data, _docId:d.id, _shared:true}; });
+    renderToeicBooks();
+  } catch(e) { console.error('Load shared TOEIC:', e); }
+}
+
+async function publishToeicBook(localIdx) {
+  if (!isCloudAdmin() || !_fbDB) return;
+  const book = toeicBooks[localIdx];
+  if (!book) return;
+  try {
+    const payload = {...book, uploadedBy:_currentUser.email, uploadedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    delete payload._docId; delete payload._shared;
+    let docId = book._docId;
+    if (docId) {
+      await _fbDB.collection('shared_toeic').doc(docId).set(payload);
+    } else {
+      const ref = await _fbDB.collection('shared_toeic').add(payload);
+      docId = ref.id;
+      toeicBooks[localIdx]._docId = docId;
+      saveToeicBooks();
+    }
+    showToast('✅ Đã đăng lên server: ' + book.name);
+    await loadSharedToeic();
+  } catch(e) { showToast('Lỗi publish: ' + e.message, 'e'); }
+}
+
+async function unpublishToeicBook(docId) {
+  if (!isCloudAdmin() || !_fbDB) return;
+  if (!confirm('Xoá khỏi server?')) return;
+  try {
+    await _fbDB.collection('shared_toeic').doc(docId).delete();
+    toeicBooks.forEach(b=>{ if(b._docId===docId) { delete b._docId; } });
+    saveToeicBooks();
+    showToast('Đã xoá khỏi server');
+    await loadSharedToeic();
+  } catch(e) { showToast('Lỗi xoá: ' + e.message, 'e'); }
+}
+
+async function loadSharedVocabPacks() {
+  try {
+    const snap = await _fbDB.collection('shared_vocab').orderBy('uploadedAt','desc').get();
+    sharedVocabPacks = snap.docs.map(d => ({...d.data(), _docId:d.id}));
+    renderSharedVocabSection();
+  } catch(e) { console.error('Load shared vocab:', e); }
+}
+
+async function publishVocabPack(topic) {
+  if (!isCloudAdmin() || !_fbDB) return;
+  const words = vocabList.filter(v=>v.topic===topic);
+  if (!words.length) { showToast('Chủ đề này chưa có từ vựng','e'); return; }
+  try {
+    const existing = sharedVocabPacks.find(p=>p.topic===topic);
+    const payload = {topic, name:topic, words:words.map(w=>({word:w.word,meaning:w.meaning,ipa:w.ipa,pos:w.pos,topic:w.topic})), count:words.length, uploadedBy:_currentUser.email, uploadedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    if (existing) {
+      await _fbDB.collection('shared_vocab').doc(existing._docId).set(payload);
+    } else {
+      await _fbDB.collection('shared_vocab').add(payload);
+    }
+    showToast('✅ Đã đăng vocab pack: ' + topic);
+    await loadSharedVocabPacks();
+  } catch(e) { showToast('Lỗi publish vocab: ' + e.message, 'e'); }
+}
+
+async function importSharedVocabPack(docId) {
+  if (!_fbDB) return;
+  const pack = sharedVocabPacks.find(p=>p._docId===docId);
+  if (!pack) return;
+  const existing = new Set(vocabList.map(v=>v.word));
+  const added = (pack.words||[]).filter(w=>w.word && !existing.has(w.word));
+  const skipped = (pack.words||[]).length - added.length;
+  vocabList.push(...added.map(w=>({...w, addedAt:new Date().toISOString()})));
+  localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
+  renderVocabTable(); renderTopicsPage();
+  showToast(`✅ Nhập ${added.length} từ${skipped?' (bỏ qua '+skipped+' đã có)':''} từ pack "${pack.name}"`);
+}
+
+function renderSharedVocabSection() {
+  const el = document.getElementById('sharedVocabSection');
+  if (!el) return;
+  if (!sharedVocabPacks.length) { el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML = `<div style="font-size:14px;font-weight:700;margin-bottom:10px">📦 Vocab packs từ server</div>` +
+    sharedVocabPacks.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;background:var(--s2);border:1px solid var(--border);margin-bottom:8px">
+      <div><div style="font-weight:600;font-size:13.5px">${esc(p.name)}</div><div style="font-size:11.5px;color:var(--muted)">${p.count||0} từ · bởi ${esc(p.uploadedBy||'')}</div></div>
+      <button class="btn btn-s btn-sm" onclick="importSharedVocabPack('${esc(p._docId)}')">⬇ Nhập</button>
+    </div>`).join('');
+}
+
+async function loadSharedLessons() {
+  try {
+    const snap = await _fbDB.collection('shared_lessons').orderBy('uploadedAt','desc').get();
+    sharedLessons = snap.docs.map(d => ({...d.data(), _docId:d.id, _shared:true}));
+    // Merge into lessonList display (don't save to localStorage)
+    renderSharedLessonsSection();
+  } catch(e) { console.error('Load shared lessons:', e); }
+}
+
+async function publishLesson(lessonId) {
+  if (!isCloudAdmin() || !_fbDB) return;
+  const lesson = LESSONS[lessonId];
+  if (!lesson) return;
+  try {
+    const payload = {id:lessonId, ...lesson, uploadedBy:_currentUser.email, uploadedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    const existing = sharedLessons.find(l=>l.id===lessonId);
+    if (existing) {
+      await _fbDB.collection('shared_lessons').doc(existing._docId).set(payload);
+    } else {
+      await _fbDB.collection('shared_lessons').add(payload);
+    }
+    showToast('✅ Đã đăng bài nghe: ' + lesson.name);
+    await loadSharedLessons();
+  } catch(e) { showToast('Lỗi publish lesson: ' + e.message, 'e'); }
+}
+
+function renderSharedLessonsSection() {
+  const el = document.getElementById('sharedLessonsSection');
+  if (!el) return;
+  if (!sharedLessons.length) { el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML = `<div style="font-size:14px;font-weight:700;margin-bottom:10px">🌐 Bài nghe từ server</div>` +
+    sharedLessons.map(l=>`<div class="lesson-card" style="cursor:pointer;border-color:rgba(61,219,165,.3)" onclick="loadSharedLesson('${esc(l._docId)}')">
+      <div class="lc-name">${esc(l.name)}</div>
+      <div class="lc-meta">Bởi ${esc(l.uploadedBy||'')} · Luyện nghe từ server 🌐</div>
+    </div>`).join('');
+}
+
+function loadSharedLesson(docId) {
+  const lesson = sharedLessons.find(l=>l._docId===docId);
+  if (!lesson) return;
+  sp('listen');
+  // Use the same key as the lesson id stored on the server, or generate a temp key
+  const key = lesson.id || ('_shared_'+docId);
+  // Temporarily add to LESSONS so selectLesson can find it
+  LESSONS[key] = {...lesson};
+  selectLesson(key);
 }
 
 // ─── Intercept localStorage writes to trigger cloud sync automatically ───────
@@ -6862,9 +7065,14 @@ function printLesson(){
 // ═══════════════════════════════════════════
 let toeicBooks = _lsJSON2('eh_toeic', []);
 let toeicHistory = _lsJSON2('eh_toeic_hist', []);
+let sharedToeicBooks = [];   // loaded from Firestore
+let sharedVocabPacks = [];   // loaded from Firestore
+let sharedLessons    = [];   // loaded from Firestore
 let _toeicBookIdx = -1, _toeicTestIdx = -1, _toeicPart = 0;
 let _toeicAnswers = {}, _toeicDone = false, _toeicPendingBook = null;
 let _toeicTimer = null, _toeicSeconds = 0;
+let _toeicIsShared = false; // true when practising a shared (server) book
+function getActiveToeicBook() { return _toeicIsShared ? (sharedToeicBooks[_toeicBookIdx]||null) : (toeicBooks[_toeicBookIdx]||null); }
 
 const TOEIC_PARTS = {
   1:{name:'Part 1',sub:'Mô tả ảnh',count:6,type:'listen'},
@@ -6900,37 +7108,73 @@ function renderToeicBooks() {
   const empty = document.getElementById('toeicBooksEmpty');
   const filter= document.getElementById('toeicSeriesFilter');
   if(!grid) return;
-  if(!toeicBooks.length) { grid.innerHTML=''; empty.style.display='block'; filter.innerHTML=''; return; }
+  const admin = isCloudAdmin();
+  const hasLocal = toeicBooks.length > 0;
+  const hasShared = sharedToeicBooks.length > 0;
+  if(!hasLocal && !hasShared) { grid.innerHTML=''; empty.style.display='block'; filter.innerHTML=''; return; }
   empty.style.display='none';
-  const series = [...new Set(toeicBooks.map(b=>b.series))].filter(Boolean);
-  filter.innerHTML = series.map(s=>`<span class="toeic-series-badge" style="background:${SERIES_COLORS[s]||'var(--accent)'}22;color:${SERIES_COLORS[s]||'var(--accent)'}; border:1px solid ${SERIES_COLORS[s]||'var(--accent)'}44;cursor:pointer" onclick="toeicFilterSeries('${esc(s)}')">${esc(s)}</span>`).join('');
-  grid.innerHTML = toeicBooks.map((b,i)=>{
+
+  // Series filter badges (combined)
+  const allBooks = [...toeicBooks, ...sharedToeicBooks];
+  const series = [...new Set(allBooks.map(b=>b.series))].filter(Boolean);
+  filter.innerHTML = series.map(s=>`<span class="toeic-series-badge" style="background:${SERIES_COLORS[s]||'var(--accent)'}22;color:${SERIES_COLORS[s]||'var(--accent)'};border:1px solid ${SERIES_COLORS[s]||'var(--accent)'}44;cursor:pointer" onclick="toeicFilterSeries('${esc(s)}')">${esc(s)}</span>`).join('');
+
+  // Local books
+  const localHTML = toeicBooks.map((b,i)=>{
     const c = SERIES_COLORS[b.series]||'var(--accent)';
     const testCount = (b.tests||[]).length;
-    const done = toeicHistory.filter(h=>h.bookIdx===i).length;
-    return `<div class="card toeic-book" onclick="selectToeicBook(${i})" style="padding:18px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+    const done = toeicHistory.filter(h=>!h._shared&&h.bookIdx===i).length;
+    const published = !!b._docId;
+    return `<div class="card toeic-book" data-series="${esc(b.series||'')}" onclick="selectToeicBook(${i},false)" style="padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:6px;flex-wrap:wrap">
         <span class="toeic-series-badge" style="background:${c}22;color:${c};border:1px solid ${c}44">${esc(b.series||'?')}</span>
-        <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 4px" onclick="event.stopPropagation();deleteToeicBook(${i})" title="Xóa sách">🗑</button>
+        <div style="display:flex;gap:4px">
+          ${admin?`<button class="btn btn-sm" style="font-size:11px;padding:3px 8px;background:rgba(61,219,165,.12);border:1px solid rgba(61,219,165,.3);color:var(--ok)" onclick="event.stopPropagation();publishToeicBook(${i})" title="${published?'Cập nhật lên server':'Đăng lên server'}">${published?'🔄 Cập nhật':'📤 Đăng'}</button>`:''}
+          <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 4px" onclick="event.stopPropagation();deleteToeicBook(${i})" title="Xóa sách">🗑</button>
+        </div>
       </div>
       <div style="font-size:15px;font-weight:800;margin-bottom:4px;line-height:1.3">${esc(b.name)}</div>
       ${b.year?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${b.year}</div>`:''}
       <div style="font-size:12px;color:var(--muted)">${testCount} đề thi · ${done} lượt làm</div>
     </div>`;
   }).join('');
+
+  // Shared books
+  const sharedHTML = sharedToeicBooks.length ? `
+    <div style="grid-column:1/-1;font-size:13px;font-weight:700;color:var(--accent);margin-top:${hasLocal?'16px':'0'};margin-bottom:2px">🌐 Thư viện đề thi (server)</div>
+    ${sharedToeicBooks.map((b,i)=>{
+      const c = SERIES_COLORS[b.series]||'var(--accent)';
+      const testCount = (b.tests||[]).length;
+      const done = toeicHistory.filter(h=>h._shared&&h.bookIdx===i).length;
+      return `<div class="card toeic-book" data-series="${esc(b.series||'')}" onclick="selectToeicBook(${i},true)" style="padding:18px;border-color:rgba(61,219,165,.25)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:6px;flex-wrap:wrap">
+          <span class="toeic-series-badge" style="background:${c}22;color:${c};border:1px solid ${c}44">${esc(b.series||'?')}</span>
+          <div style="display:flex;gap:4px;align-items:center">
+            <span style="font-size:10.5px;color:var(--ok);font-weight:700">🌐 Server</span>
+            ${admin?`<button style="background:none;border:none;color:var(--err);cursor:pointer;font-size:13px;padding:0 4px" onclick="event.stopPropagation();unpublishToeicBook('${esc(b._docId)}')" title="Xoá khỏi server">🗑</button>`:''}
+          </div>
+        </div>
+        <div style="font-size:15px;font-weight:800;margin-bottom:4px;line-height:1.3">${esc(b.name)}</div>
+        ${b.year?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${b.year}</div>`:''}
+        <div style="font-size:12px;color:var(--muted)">${testCount} đề thi · ${done} lượt làm</div>
+      </div>`;
+    }).join('')}` : '';
+
+  grid.innerHTML = localHTML + sharedHTML;
 }
 
 function toeicFilterSeries(series) {
   const grid = document.getElementById('toeicBooksGrid');
   if(!grid) return;
-  grid.querySelectorAll('.toeic-book').forEach((el,i)=>{
-    el.style.display = (!series||toeicBooks[i]?.series===series) ? '' : 'none';
+  grid.querySelectorAll('.toeic-book').forEach(el=>{
+    el.style.display = (!series || el.dataset.series===series) ? '' : 'none';
   });
 }
 
-function selectToeicBook(idx) {
+function selectToeicBook(idx, isShared) {
   _toeicBookIdx = idx;
-  const book = toeicBooks[idx];
+  _toeicIsShared = !!isShared;
+  const book = getActiveToeicBook();
   if(!book) return;
   document.getElementById('toeicTestsTitle').textContent = book.name;
   const grid = document.getElementById('toeicTestsGrid');
@@ -6948,7 +7192,7 @@ function selectToeicBook(idx) {
 
 function selectToeicTest(ti) {
   _toeicTestIdx = ti;
-  const book = toeicBooks[_toeicBookIdx];
+  const book = getActiveToeicBook();
   const test = book?.tests?.[ti];
   if(!test) return;
   document.getElementById('toeicPartsTitle').textContent = `${book.name} — ${test.name||'Test '+(ti+1)}`;
@@ -6979,7 +7223,7 @@ function getPartQuestions(test, part) {
 function selectToeicPart(part) {
   _toeicPart = parseInt(part);
   _toeicAnswers = {}; _toeicDone = false;
-  const book = toeicBooks[_toeicBookIdx];
+  const book = getActiveToeicBook();
   const test = book?.tests?.[_toeicTestIdx];
   if(!test) return;
   const info = TOEIC_PARTS[part];
@@ -7115,7 +7359,7 @@ function checkToeicPart() {
   _toeicDone = true;
   document.getElementById('toeicSubmitBtn').disabled = true;
   document.getElementById('toeicSubmitBtn').textContent = '✔ Đã nộp';
-  const book = toeicBooks[_toeicBookIdx];
+  const book = getActiveToeicBook();
   const test = book?.tests?.[_toeicTestIdx];
   if(!test) return;
   const part = _toeicPart;
@@ -7162,6 +7406,7 @@ function checkToeicPart() {
   // Save to history
   const hist = {
     bookIdx:_toeicBookIdx, testIdx:_toeicTestIdx, part, score, total, pct, duration,
+    _shared:_toeicIsShared,
     bookName:book.name, testName:test.name||'Test '+(_toeicTestIdx+1),
     date:new Date().toISOString().slice(0,10),
     time:new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})
@@ -7176,7 +7421,7 @@ function toeicBack(to) {
   clearInterval(_toeicTimer);
   _toeicAnswers = {}; _toeicDone = false;
   if(to==='books') renderToeicBooks();
-  else if(to==='tests') selectToeicBook(_toeicBookIdx);
+  else if(to==='tests') selectToeicBook(_toeicBookIdx, _toeicIsShared);
   else if(to==='parts') selectToeicTest(_toeicTestIdx);
 }
 
