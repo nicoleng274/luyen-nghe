@@ -7109,6 +7109,7 @@ function selectToeicOpt(qIdx, optIdx) {
 
 function checkToeicPart() {
   if(_toeicDone) return;
+  if(!Object.keys(_toeicAnswers).length){ showToast('Vui lòng trả lời ít nhất 1 câu trước khi nộp','w'); return; }
   clearInterval(_toeicTimer);
   _toeicDone = true;
   document.getElementById('toeicSubmitBtn').disabled = true;
@@ -7235,6 +7236,7 @@ function parseToeicJSON(text) {
 }
 function saveToeicImport() {
   if(!_toeicPendingBook) return;
+  if(toeicBooks.some(b=>b.series===_toeicPendingBook.series&&b.name===_toeicPendingBook.name)){ showToast('Sách này đã tồn tại','e'); return; }
   toeicBooks.push(_toeicPendingBook);
   saveToeicBooks();
   closeToeicImport();
