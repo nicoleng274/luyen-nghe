@@ -576,6 +576,28 @@ audio{width:100%;accent-color:var(--accent)}
   body{background:#fff;color:#000}
   .mc-opt,.lq-item{break-inside:avoid}
 }
+/* ── TOEIC ── */
+.toeic-book{cursor:pointer;transition:.18s;border:1px solid var(--border)}
+.toeic-book:hover{border-color:var(--accent);transform:translateY(-2px)}
+.toeic-series-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.toeic-test-card{cursor:pointer;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--s2);transition:.18s}
+.toeic-test-card:hover{border-color:var(--accent);background:var(--s3)}
+.toeic-part-btn{display:flex;flex-direction:column;gap:4px;padding:14px 12px;border-radius:12px;border:1px solid var(--border);background:var(--s2);cursor:pointer;transition:.18s;text-align:left}
+.toeic-part-btn:hover{border-color:var(--accent);background:var(--s3)}
+.toeic-part-btn.done{border-color:var(--ok);background:rgba(61,219,165,.08)}
+.toeic-q{margin-bottom:20px;padding:16px;background:var(--s2);border-radius:12px;border:1px solid var(--border)}
+.toeic-q.correct{border-color:var(--ok);background:rgba(61,219,165,.07)}
+.toeic-q.wrong{border-color:var(--err);background:rgba(255,107,138,.07)}
+.toeic-passage{background:var(--s3);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13.5px;line-height:1.8;white-space:pre-wrap;border-left:3px solid var(--accent)}
+.toeic-opt{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);margin-bottom:7px;cursor:pointer;transition:.15s;font-size:13.5px;user-select:none}
+.toeic-opt:hover{border-color:var(--accent);background:var(--s3)}
+.toeic-opt.sel{border-color:var(--accent);background:rgba(124,111,255,.12)}
+.toeic-opt.opt-ok{border-color:var(--ok)!important;background:rgba(61,219,165,.12)!important}
+.toeic-opt.opt-err{border-color:var(--err)!important;background:rgba(255,107,138,.12)!important}
+.toeic-opt.dis{cursor:default;pointer-events:none}
+.toeic-opt-key{font-weight:800;min-width:18px;color:var(--muted)}
+.toeic-audio-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--s3);cursor:pointer;font-size:13px;margin-bottom:10px;transition:.15s}
+.toeic-audio-btn:hover{border-color:var(--accent);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -604,6 +626,7 @@ audio{width:100%;accent-color:var(--accent)}
     <div class="ni" onclick="sp('quiz')"><span class="ni-icon">🧠</span>Kiểm tra từ vựng</div>
     <div class="ni" onclick="sp('listen')"><span class="ni-icon">🎧</span>Luyện nghe</div>
     <div class="ni" onclick="sp('scores')"><span class="ni-icon">📊</span>Điểm số</div>
+    <div class="ni" onclick="sp('toeic')"><span class="ni-icon">📝</span>Luyện TOEIC</div>
   </nav>
   <div style="padding:8px 10px">
     <button id="profileBtn" onclick="openProfileModal()" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left">👤 default</button>
@@ -1426,6 +1449,96 @@ audio{width:100%;accent-color:var(--accent)}
   </div>
 </section>
 
+<!-- TOEIC -->
+<section id="page-toeic" class="page">
+  <div id="toeicBooksView">
+    <div class="ph">
+      <div class="pt">Luyện <span>TOEIC</span></div>
+      <div class="ps">Thư viện đề thi theo sách — ETS, YBM, Hackers...</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div id="toeicSeriesFilter" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-s btn-sm" onclick="openToeicImport()">⬆ Import đề thi</button>
+        <button class="btn btn-g btn-sm" onclick="openToeicScores()">📊 Lịch sử</button>
+      </div>
+    </div>
+    <div id="toeicBooksGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px"></div>
+    <div id="toeicBooksEmpty" class="empty" style="display:none;padding:48px">
+      <div class="empty-i">📝</div>
+      <div>Chưa có sách nào</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:6px">Nhấn <strong>Import đề thi</strong> để thêm sách TOEIC</div>
+    </div>
+  </div>
+
+  <!-- Tests view (shown when a book is selected) -->
+  <div id="toeicTestsView" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <button class="btn btn-g btn-sm" onclick="toeicBack('books')">← Sách</button>
+      <div style="font-size:18px;font-weight:800" id="toeicTestsTitle"></div>
+    </div>
+    <div id="toeicTestsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px"></div>
+  </div>
+
+  <!-- Parts view (shown when a test is selected) -->
+  <div id="toeicPartsView" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <button class="btn btn-g btn-sm" id="toeicPartsBackBtn" onclick="toeicBack('tests')">← Đề thi</button>
+      <div style="font-size:18px;font-weight:800" id="toeicPartsTitle"></div>
+    </div>
+    <div id="toeicPartsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
+  </div>
+
+  <!-- Practice view -->
+  <div id="toeicPracticeView" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn btn-g btn-sm" onclick="toeicBack('parts')">← Part</button>
+        <div style="font-size:16px;font-weight:800" id="toeicPracticeTitle"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div id="toeicTimerDisplay" style="font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;min-width:52px"></div>
+        <button class="btn btn-s" id="toeicSubmitBtn" onclick="checkToeicPart()">✅ Nộp bài</button>
+      </div>
+    </div>
+    <div id="toeicPracticeScore" style="display:none;margin-bottom:16px;padding:14px 18px;border-radius:12px;background:var(--s2);text-align:center"></div>
+    <div id="toeicQList"></div>
+  </div>
+
+  <!-- Import modal -->
+  <div id="toeicImportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center">
+    <div style="background:var(--s1);border-radius:16px;padding:24px;width:min(520px,95vw);max-height:85vh;overflow-y:auto">
+      <div style="font-size:17px;font-weight:800;margin-bottom:16px">⬆ Import đề thi TOEIC</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+        Upload file <strong>.json</strong> theo format mẫu. Mỗi file là 1 sách (series + nhiều test).
+        <br><a id="toeicSampleLink" style="color:var(--accent);cursor:pointer" onclick="downloadToeicSample()">📥 Tải file mẫu</a>
+      </div>
+      <div id="toeicImportDrop" style="border:2px dashed var(--border);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:14px" onclick="document.getElementById('toeicFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handleToeicDrop(event)">
+        <div style="font-size:28px;margin-bottom:8px">📂</div>
+        <div style="font-size:13.5px">Kéo thả file hoặc <strong style="color:var(--accent)">chọn file</strong></div>
+      </div>
+      <input type="file" id="toeicFileInput" accept=".json" style="display:none" onchange="handleToeicFile(this.files[0])">
+      <div id="toeicImportPreview" style="display:none;margin-bottom:14px;padding:12px;background:rgba(61,219,165,.08);border:1px solid rgba(61,219,165,.2);border-radius:8px;font-size:13px"></div>
+      <div id="toeicImportErr" style="display:none;color:var(--err);font-size:13px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-g btn-sm" onclick="closeToeicImport()">Hủy</button>
+        <button class="btn btn-s btn-sm" id="toeicImportSaveBtn" style="display:none" onclick="saveToeicImport()">💾 Lưu sách này</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scores history modal -->
+  <div id="toeicScoresModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center">
+    <div style="background:var(--s1);border-radius:16px;padding:24px;width:min(560px,95vw);max-height:85vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:17px;font-weight:800">📊 Lịch sử luyện TOEIC</div>
+        <button class="btn btn-g btn-sm" onclick="closeToeicScores()">✕</button>
+      </div>
+      <div id="toeicScoresList"></div>
+    </div>
+  </div>
+</section>
+
 </main>
 <div id="toast" class="toast"></div>
 
@@ -1628,7 +1741,7 @@ function sp(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const pages = ['home','vocab','topics','flashcard','phrase','quiz','listen','scores'];
+  const pages = ['home','vocab','topics','flashcard','phrase','quiz','listen','scores','toeic'];
   const bnPages = ['home','vocab','topics','flashcard','quiz','listen'];
   pages.forEach((p,i)=>{
     if(p===id) document.querySelectorAll('.ni')[i].classList.add('active');
@@ -1641,6 +1754,7 @@ function sp(id) {
   if(id==='home')   renderHome();
   if(id==='flashcard') initFlashcardPage();
   if(id==='topics') renderTopicsPage();
+  if(id==='toeic')  renderToeicBooks();
 }
 
 // ═══════════════════════════════════════════
@@ -6740,6 +6854,441 @@ function printLesson(){
     ${qs||'<p>Không có câu hỏi</p>'}
     <script>window.onload=()=>window.print()<\/script></body></html>`);
   w.document.close();
+}
+
+// ═══════════════════════════════════════════
+//  TOEIC
+// ═══════════════════════════════════════════
+let toeicBooks = _lsJSON2('eh_toeic', []);
+let toeicHistory = _lsJSON2('eh_toeic_hist', []);
+let _toeicBookIdx = -1, _toeicTestIdx = -1, _toeicPart = 0;
+let _toeicAnswers = {}, _toeicDone = false, _toeicPendingBook = null;
+let _toeicTimer = null, _toeicSeconds = 0;
+
+const TOEIC_PARTS = {
+  1:{name:'Part 1',sub:'Mô tả ảnh',count:6,type:'listen'},
+  2:{name:'Part 2',sub:'Hỏi – đáp',count:25,type:'listen'},
+  3:{name:'Part 3',sub:'Đoạn hội thoại',count:39,type:'listen'},
+  4:{name:'Part 4',sub:'Bài nói ngắn',count:30,type:'listen'},
+  5:{name:'Part 5',sub:'Điền từ vào câu',count:30,type:'read'},
+  6:{name:'Part 6',sub:'Điền vào đoạn văn',count:16,type:'read'},
+  7:{name:'Part 7',sub:'Đọc hiểu',count:54,type:'read'}
+};
+const SERIES_COLORS = {
+  ETS:'#ff6b8a', YBM:'#3ddba5', Hackers:'#a89fff', Oxford:'#ffd166', Longman:'#66d9ff'
+};
+
+function saveToeicBooks() {
+  localStorage.setItem(lsk('eh_toeic'), JSON.stringify(toeicBooks));
+}
+function saveToeicHistory() {
+  localStorage.setItem(lsk('eh_toeic_hist'), JSON.stringify(toeicHistory));
+}
+
+// ── TOEIC: Views ──
+function toeicShowView(view) {
+  ['toeicBooksView','toeicTestsView','toeicPartsView','toeicPracticeView'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display = id===view ? 'block' : 'none';
+  });
+}
+
+function renderToeicBooks() {
+  toeicShowView('toeicBooksView');
+  const grid  = document.getElementById('toeicBooksGrid');
+  const empty = document.getElementById('toeicBooksEmpty');
+  const filter= document.getElementById('toeicSeriesFilter');
+  if(!grid) return;
+  if(!toeicBooks.length) { grid.innerHTML=''; empty.style.display='block'; filter.innerHTML=''; return; }
+  empty.style.display='none';
+  const series = [...new Set(toeicBooks.map(b=>b.series))].filter(Boolean);
+  filter.innerHTML = series.map(s=>`<span class="toeic-series-badge" style="background:${SERIES_COLORS[s]||'var(--accent)'}22;color:${SERIES_COLORS[s]||'var(--accent)'}; border:1px solid ${SERIES_COLORS[s]||'var(--accent)'}44;cursor:pointer" onclick="toeicFilterSeries('${esc(s)}')">${esc(s)}</span>`).join('');
+  grid.innerHTML = toeicBooks.map((b,i)=>{
+    const c = SERIES_COLORS[b.series]||'var(--accent)';
+    const testCount = (b.tests||[]).length;
+    const done = toeicHistory.filter(h=>h.bookIdx===i).length;
+    return `<div class="card toeic-book" onclick="selectToeicBook(${i})" style="padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <span class="toeic-series-badge" style="background:${c}22;color:${c};border:1px solid ${c}44">${esc(b.series||'?')}</span>
+        <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 4px" onclick="event.stopPropagation();deleteToeicBook(${i})" title="Xóa sách">🗑</button>
+      </div>
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px;line-height:1.3">${esc(b.name)}</div>
+      ${b.year?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${b.year}</div>`:''}
+      <div style="font-size:12px;color:var(--muted)">${testCount} đề thi · ${done} lượt làm</div>
+    </div>`;
+  }).join('');
+}
+
+function toeicFilterSeries(series) {
+  const grid = document.getElementById('toeicBooksGrid');
+  if(!grid) return;
+  grid.querySelectorAll('.toeic-book').forEach((el,i)=>{
+    el.style.display = (!series||toeicBooks[i]?.series===series) ? '' : 'none';
+  });
+}
+
+function selectToeicBook(idx) {
+  _toeicBookIdx = idx;
+  const book = toeicBooks[idx];
+  if(!book) return;
+  document.getElementById('toeicTestsTitle').textContent = book.name;
+  const grid = document.getElementById('toeicTestsGrid');
+  grid.innerHTML = (book.tests||[]).map((t,ti)=>{
+    const done = toeicHistory.filter(h=>h.bookIdx===idx&&h.testIdx===ti);
+    const doneCount = [...new Set(done.map(h=>h.part))].length;
+    return `<div class="toeic-test-card" onclick="selectToeicTest(${ti})">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">${esc(t.name||'Test '+(ti+1))}</div>
+      <div style="font-size:12px;color:var(--muted)">${doneCount}/7 part đã làm</div>
+      ${doneCount>0?`<div style="margin-top:8px;height:3px;background:var(--border);border-radius:2px"><div style="height:100%;width:${Math.round(doneCount/7*100)}%;background:var(--ok);border-radius:2px"></div></div>`:''}
+    </div>`;
+  }).join('');
+  toeicShowView('toeicTestsView');
+}
+
+function selectToeicTest(ti) {
+  _toeicTestIdx = ti;
+  const book = toeicBooks[_toeicBookIdx];
+  const test = book?.tests?.[ti];
+  if(!test) return;
+  document.getElementById('toeicPartsTitle').textContent = `${book.name} — ${test.name||'Test '+(ti+1)}`;
+  const grid = document.getElementById('toeicPartsGrid');
+  grid.innerHTML = Object.entries(TOEIC_PARTS).map(([p,info])=>{
+    const key = 'p'+p;
+    const qs = getPartQuestions(test, parseInt(p));
+    const count = qs.length;
+    const hist = toeicHistory.find(h=>h.bookIdx===_toeicBookIdx&&h.testIdx===ti&&h.part===parseInt(p));
+    return `<button class="toeic-part-btn${hist?' done':''}" onclick="selectToeicPart(${p})">
+      <span style="font-size:18px">${info.type==='listen'?'🔊':'📖'}</span>
+      <span style="font-size:13.5px;font-weight:700">${info.name}</span>
+      <span style="font-size:11.5px;color:var(--muted)">${info.sub}</span>
+      <span style="font-size:12px;color:${count?'var(--text)':'var(--muted)'}">${count} câu${hist?` · <strong style="color:var(--ok)">${hist.score}/${hist.total}</strong>`:''}</span>
+    </button>`;
+  }).join('');
+  toeicShowView('toeicPartsView');
+}
+
+function getPartQuestions(test, part) {
+  const key = 'p'+part;
+  const data = test[key] || [];
+  if([1,2,5].includes(part)) return data;
+  // Parts 3,4,6,7 are grouped — flatten for counting
+  return data.reduce((acc,g)=>acc.concat(g.qs||[]),[]);
+}
+
+function selectToeicPart(part) {
+  _toeicPart = parseInt(part);
+  _toeicAnswers = {}; _toeicDone = false;
+  const book = toeicBooks[_toeicBookIdx];
+  const test = book?.tests?.[_toeicTestIdx];
+  if(!test) return;
+  const info = TOEIC_PARTS[part];
+  document.getElementById('toeicPracticeTitle').textContent = `${test.name||'Test '+(_toeicTestIdx+1)} — ${info.name}: ${info.sub}`;
+  document.getElementById('toeicPracticeScore').style.display='none';
+  document.getElementById('toeicSubmitBtn').disabled=false;
+  document.getElementById('toeicSubmitBtn').textContent='✅ Nộp bài';
+  renderToeicPartQuestions(test, part);
+  // Timer
+  clearInterval(_toeicTimer); _toeicSeconds=0;
+  const td = document.getElementById('toeicTimerDisplay');
+  _toeicTimer = setInterval(()=>{
+    _toeicSeconds++;
+    const m=Math.floor(_toeicSeconds/60),s=_toeicSeconds%60;
+    if(td) td.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  },1000);
+  toeicShowView('toeicPracticeView');
+}
+
+function renderToeicPartQuestions(test, part) {
+  const list = document.getElementById('toeicQList');
+  const data = test['p'+part] || [];
+  let html = '';
+  const ABCD = ['A','B','C','D'];
+
+  if(part===1) {
+    data.forEach((q,qi)=>{
+      html += `<div class="toeic-q" id="tq_${qi}">
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <span style="font-size:12px;font-weight:700;color:var(--muted);min-width:28px">Q${qi+1}</span>
+          ${q.img?`<img src="${esc(q.img)}" style="max-width:280px;max-height:200px;border-radius:8px;object-fit:cover">`:
+          `<div style="color:var(--muted);font-size:13px;font-style:italic">📷 [Xem ảnh trong sách]</div>`}
+        </div>
+        ${q.audio?`<button class="toeic-audio-btn" onclick="playAudio('${esc(q.audio)}')">🔊 Nghe câu hỏi</button>`:''}
+        ${renderToeicOpts(q.opts||[],qi,3)}
+      </div>`;
+    });
+  } else if(part===2) {
+    data.forEach((q,qi)=>{
+      html += `<div class="toeic-q" id="tq_${qi}">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+          <span style="font-size:12px;font-weight:700;color:var(--muted)">Q${qi+1}</span>
+          ${q.audio?`<button class="toeic-audio-btn" onclick="playAudio('${esc(q.audio)}')">🔊 Nghe câu hỏi</button>`:'<span style="color:var(--muted);font-size:13px;font-style:italic">🔊 [Audio từ sách]</span>'}
+        </div>
+        ${renderToeicOpts(q.opts||[],qi,2)}
+      </div>`;
+    });
+  } else if(part===3||part===4) {
+    let qOffset=0;
+    data.forEach((group,gi)=>{
+      html += `<div class="toeic-q" id="tq_g${gi}" style="border-left:3px solid var(--accent)">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+          <span style="font-size:11px;font-weight:700;color:var(--accent)">Đoạn ${gi+1}</span>
+          ${group.audio?`<button class="toeic-audio-btn" onclick="playAudio('${esc(group.audio)}')">🔊 Nghe</button>`:'<span style="color:var(--muted);font-size:13px;font-style:italic">🔊 [Audio từ sách]</span>'}
+          ${group.script?`<button class="toeic-audio-btn" style="font-size:12px" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📜 Script</button><div style="display:none;font-size:12.5px;color:var(--muted);padding:8px 10px;background:var(--s3);border-radius:6px;margin-top:6px;white-space:pre-wrap">${esc(group.script)}</div>`:''}
+        </div>
+        ${(group.qs||[]).map((q,qi2)=>{
+          const globalIdx = qOffset+qi2;
+          return `<div style="margin-bottom:14px">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:8px">${globalIdx+1}. ${esc(q.q||'')}</div>
+            ${renderToeicOpts(q.opts||[],globalIdx,3)}
+          </div>`;
+        }).join('')}`;
+      qOffset += (group.qs||[]).length;
+      html += `</div>`;
+    });
+  } else if(part===5) {
+    data.forEach((q,qi)=>{
+      html += `<div class="toeic-q" id="tq_${qi}">
+        <div style="font-size:14px;margin-bottom:12px;line-height:1.7"><span style="font-size:12px;font-weight:700;color:var(--muted);margin-right:8px">${qi+1}.</span>${esc(q.q||'')}</div>
+        ${renderToeicOpts(q.opts||[],qi,3)}
+        ${q.exp?`<div id="texp_${qi}" style="display:none;font-size:12.5px;color:var(--muted);padding:8px 10px;background:var(--s3);border-radius:6px;margin-top:6px">${esc(q.exp)}</div>`:''}
+      </div>`;
+    });
+  } else if(part===6) {
+    let qOffset=0;
+    data.forEach((group,gi)=>{
+      html += `<div class="toeic-q" id="tq_g${gi}" style="border-left:3px solid var(--accent)">
+        <div class="toeic-passage">${esc(group.passage||'')}</div>
+        ${(group.qs||[]).map((q,qi2)=>{
+          const globalIdx=qOffset+qi2;
+          return `<div style="margin-bottom:14px">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:8px">${globalIdx+1}. ${esc(q.q||'[Chọn từ điền vào chỗ trống]')}</div>
+            ${renderToeicOpts(q.opts||[],globalIdx,3)}
+          </div>`;
+        }).join('')}`;
+      qOffset += (group.qs||[]).length;
+      html += `</div>`;
+    });
+  } else if(part===7) {
+    let qOffset=0;
+    data.forEach((group,gi)=>{
+      const passages = group.passages||[];
+      html += `<div class="toeic-q" id="tq_g${gi}" style="border-left:3px solid var(--accent)">
+        ${passages.length>1?`<div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px">${passages.length === 2?'Double Passage':'Triple Passage'}</div>`:''}
+        ${passages.map((p,pi)=>`<details style="margin-bottom:8px"><summary style="font-size:13px;font-weight:600;cursor:pointer;color:var(--accent)">📄 Bài đọc ${passages.length>1?pi+1:''}</summary><div class="toeic-passage" style="margin-top:8px">${esc(p)}</div></details>`).join('')}
+        ${(group.qs||[]).map((q,qi2)=>{
+          const globalIdx=qOffset+qi2;
+          return `<div style="margin-bottom:14px">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:8px">${globalIdx+1}. ${esc(q.q||'')}</div>
+            ${renderToeicOpts(q.opts||[],globalIdx,3)}
+          </div>`;
+        }).join('')}`;
+      qOffset += (group.qs||[]).length;
+      html += `</div>`;
+    });
+  }
+
+  list.innerHTML = html || '<div class="empty" style="padding:32px"><div class="empty-i">📝</div><div>Part này chưa có câu hỏi</div></div>';
+}
+
+function renderToeicOpts(opts, qIdx, maxIdx) {
+  const KEYS = ['A','B','C','D'];
+  return opts.slice(0, maxIdx+1).map((o,i)=>
+    `<div class="toeic-opt" id="to_${qIdx}_${i}" onclick="selectToeicOpt(${qIdx},${i})">
+      <span class="toeic-opt-key">${KEYS[i]}</span><span>${esc(o)}</span>
+    </div>`
+  ).join('');
+}
+
+function selectToeicOpt(qIdx, optIdx) {
+  if(_toeicDone) return;
+  // Deselect previous
+  document.querySelectorAll(`[id^="to_${qIdx}_"]`).forEach(el=>el.classList.remove('sel'));
+  document.getElementById(`to_${qIdx}_${optIdx}`)?.classList.add('sel');
+  _toeicAnswers[qIdx] = optIdx;
+}
+
+function checkToeicPart() {
+  if(_toeicDone) return;
+  clearInterval(_toeicTimer);
+  _toeicDone = true;
+  document.getElementById('toeicSubmitBtn').disabled = true;
+  document.getElementById('toeicSubmitBtn').textContent = '✔ Đã nộp';
+  const book = toeicBooks[_toeicBookIdx];
+  const test = book?.tests?.[_toeicTestIdx];
+  if(!test) return;
+  const part = _toeicPart;
+  const data = test['p'+part] || [];
+
+  // Build flat answer key
+  const answerKey = [];
+  if([1,2,5].includes(part)) {
+    data.forEach(q=>answerKey.push(q.ans??-1));
+  } else {
+    data.forEach(group=>(group.qs||[]).forEach(q=>answerKey.push(q.ans??-1)));
+  }
+
+  let score=0;
+  answerKey.forEach((correct,qi)=>{
+    const userAns = _toeicAnswers[qi];
+    const optEls = document.querySelectorAll(`[id^="to_${qi}_"]`);
+    optEls.forEach(el=>el.classList.add('dis'));
+    if(userAns===correct) {
+      score++;
+      document.getElementById(`to_${qi}_${correct}`)?.classList.add('opt-ok');
+    } else {
+      if(userAns!==undefined) document.getElementById(`to_${qi}_${userAns}`)?.classList.add('opt-err');
+      document.getElementById(`to_${qi}_${correct}`)?.classList.add('opt-ok');
+    }
+    // Show explanation for Part 5
+    const expEl = document.getElementById(`texp_${qi}`);
+    if(expEl) expEl.style.display='block';
+    // Highlight question container
+    const qEl = document.getElementById(`tq_${qi}`);
+    if(qEl) qEl.classList.add(userAns===correct?'correct':'wrong');
+  });
+
+  const total = answerKey.length;
+  const pct = total ? Math.round(score/total*100) : 0;
+  const m=Math.floor(_toeicSeconds/60), s=_toeicSeconds%60;
+  const duration=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const scoreEl = document.getElementById('toeicPracticeScore');
+  scoreEl.style.display='block';
+  scoreEl.innerHTML = `<div style="font-size:30px;font-weight:800;color:${pct>=80?'var(--ok)':pct>=50?'var(--warn)':'var(--err)'}">${score}/${total}</div>
+    <div style="font-size:14px;color:var(--muted);margin-top:4px">${pct}% chính xác · ${duration}</div>`;
+  scoreEl.scrollIntoView({behavior:'smooth',block:'start'});
+
+  // Save to history
+  const hist = {
+    bookIdx:_toeicBookIdx, testIdx:_toeicTestIdx, part, score, total, pct, duration,
+    bookName:book.name, testName:test.name||'Test '+(_toeicTestIdx+1),
+    date:new Date().toISOString().slice(0,10),
+    time:new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})
+  };
+  toeicHistory.push(hist);
+  if(toeicHistory.length>500) toeicHistory.splice(0, toeicHistory.length-500);
+  saveToeicHistory();
+  addAct('📝','rgba(255,209,102,.2)',`TOEIC ${TOEIC_PARTS[part]?.name}: ${score}/${total} (${pct}%)`);
+}
+
+function toeicBack(to) {
+  clearInterval(_toeicTimer);
+  if(to==='books') renderToeicBooks();
+  else if(to==='tests') selectToeicBook(_toeicBookIdx);
+  else if(to==='parts') selectToeicTest(_toeicTestIdx);
+}
+
+// ── TOEIC: Import ──
+function openToeicImport() {
+  _toeicPendingBook = null;
+  document.getElementById('toeicImportPreview').style.display='none';
+  document.getElementById('toeicImportErr').style.display='none';
+  document.getElementById('toeicImportSaveBtn').style.display='none';
+  document.getElementById('toeicFileInput').value='';
+  document.getElementById('toeicImportModal').style.display='flex';
+}
+function closeToeicImport() { document.getElementById('toeicImportModal').style.display='none'; }
+function handleToeicDrop(e) {
+  e.preventDefault();
+  document.getElementById('toeicImportDrop').style.borderColor='var(--border)';
+  const file = e.dataTransfer.files[0];
+  if(file) handleToeicFile(file);
+}
+function handleToeicFile(file) {
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => parseToeicJSON(e.target.result);
+  reader.readAsText(file);
+}
+function parseToeicJSON(text) {
+  const errEl = document.getElementById('toeicImportErr');
+  const prevEl = document.getElementById('toeicImportPreview');
+  const saveBtn = document.getElementById('toeicImportSaveBtn');
+  try {
+    const data = JSON.parse(text);
+    if(!data.name||!Array.isArray(data.tests)) throw new Error('Thiếu trường "name" hoặc "tests"');
+    _toeicPendingBook = {
+      series: data.series||'Other',
+      name: data.name,
+      year: data.year||null,
+      addedAt: Date.now(),
+      tests: data.tests.map((t,i)=>({
+        name: t.name||'Test '+(i+1),
+        p1:t.p1||[], p2:t.p2||[], p3:t.p3||[], p4:t.p4||[],
+        p5:t.p5||[], p6:t.p6||[], p7:t.p7||[]
+      }))
+    };
+    const totalQ = _toeicPendingBook.tests.reduce((a,t)=>{
+      return a + (t.p1.length+t.p2.length) +
+        [t.p3,t.p4,t.p6,t.p7].reduce((b,g)=>b+g.reduce((c,x)=>c+(x.qs||[]).length,0),0) + t.p5.length;
+    },0);
+    prevEl.innerHTML = `✅ <strong>${esc(_toeicPendingBook.name)}</strong> · Series: <strong>${esc(_toeicPendingBook.series)}</strong><br>${_toeicPendingBook.tests.length} đề thi · ${totalQ} câu hỏi`;
+    prevEl.style.display='block';
+    errEl.style.display='none';
+    saveBtn.style.display='inline-block';
+  } catch(err) {
+    errEl.textContent = '❌ ' + err.message;
+    errEl.style.display='block';
+    prevEl.style.display='none';
+    saveBtn.style.display='none';
+  }
+}
+function saveToeicImport() {
+  if(!_toeicPendingBook) return;
+  toeicBooks.push(_toeicPendingBook);
+  saveToeicBooks();
+  closeToeicImport();
+  renderToeicBooks();
+  showToast('✅ Đã thêm: ' + _toeicPendingBook.name);
+  _toeicPendingBook = null;
+}
+function deleteToeicBook(idx) {
+  const b = toeicBooks[idx];
+  if(!b||!confirm(`Xóa sách "${b.name}"?`)) return;
+  toeicBooks.splice(idx,1);
+  saveToeicBooks();
+  renderToeicBooks();
+  showToast('Đã xóa: ' + b.name);
+}
+
+// ── TOEIC: Scores history ──
+function openToeicScores() {
+  const list = document.getElementById('toeicScoresList');
+  if(!toeicHistory.length) { list.innerHTML='<div style="color:var(--muted);padding:24px;text-align:center">Chưa có lịch sử luyện tập</div>'; }
+  else {
+    list.innerHTML = [...toeicHistory].reverse().map(h=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:8px;background:var(--s2);margin-bottom:8px">
+        <div>
+          <div style="font-size:13.5px;font-weight:700">${esc(h.bookName)} — ${esc(h.testName)}</div>
+          <div style="font-size:12px;color:var(--muted)">${TOEIC_PARTS[h.part]?.name||'Part '+h.part} · ${h.date} ${h.time}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:16px;font-weight:800;color:${h.pct>=80?'var(--ok)':h.pct>=50?'var(--warn)':'var(--err)'}">${h.score}/${h.total}</div>
+          <div style="font-size:11px;color:var(--muted)">${h.pct}% · ${h.duration}</div>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('toeicScoresModal').style.display='flex';
+}
+function closeToeicScores() { document.getElementById('toeicScoresModal').style.display='none'; }
+
+function downloadToeicSample() {
+  const sample = {
+    series:"ETS", name:"ETS TOEIC 2024", year:2024,
+    tests:[{
+      name:"Test 1",
+      p1:[{img:"",opts:["(A) A man is sitting","(B) A woman is standing","(C) They are talking","(D) The room is empty"],ans:1}],
+      p2:[{audio:"",opts:["(A) At 9 o'clock","(B) In the meeting room","(C) With the manager"],ans:0}],
+      p3:[{audio:"",script:"M: Can we meet tomorrow? W: Sure, I'm free in the afternoon.",qs:[{q:"What are they discussing?",opts:["(A) A meeting","(B) A deadline","(C) A project","(D) A report"],ans:0}]}],
+      p4:[{audio:"",script:"Welcome to our store. Today only, all items are 20% off.",qs:[{q:"What is the announcement about?",opts:["(A) A sale","(B) A new store","(C) A job opening","(D) A product recall"],ans:0}]}],
+      p5:[{q:"The manager ___ the annual report yesterday.",opts:["(A) submits","(B) submitted","(C) will submit","(D) submitting"],ans:1,exp:"Past tense vì có 'yesterday'"}],
+      p6:[{passage:"To: All Staff\nFrom: HR\n\nPlease [1] the new policy document. All employees must [2] it by Friday.",qs:[{q:"[1]",opts:["(A) review","(B) reviews","(C) reviewed","(D) reviewing"],ans:0},{q:"[2]",opts:["(A) sign","(B) signed","(C) signing","(D) to sign"],ans:0}]}],
+      p7:[{type:"single",passages:["WANTED: Sales Manager\nMinimum 3 years experience required.\nPlease send CV to hr@company.com"],qs:[{q:"Who should apply for this job?",opts:["(A) Someone with 1 year experience","(B) A recent graduate","(C) Someone with 3+ years experience","(D) A part-time worker"],ans:2}]}]
+    }]
+  };
+  const blob = new Blob([JSON.stringify(sample,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='toeic-sample.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 </script>
