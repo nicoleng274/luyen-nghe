@@ -2121,6 +2121,7 @@ function importVocabJSON(input) {
       if(!words.length){ showToast('File không có từ vựng','e'); return; }
       const existing = new Set(vocabList.map(v=>v.word));
       const added = words.filter(w=>w.word && !existing.has(w.word));
+      const skipped = words.filter(w=>w.word && existing.has(w.word)).length;
       vocabList.push(...added);
       localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
       // Restore SR data if present in export
@@ -2130,7 +2131,7 @@ function importVocabJSON(input) {
         });
       }
       renderVocabTable(); renderHome();
-      showToast('Đã nhập ' + added.length + ' từ mới');
+      showToast('Đã nhập ' + added.length + ' từ mới' + (skipped ? ` (bỏ qua ${skipped} từ đã có)` : ''));
     } catch { showToast('File không hợp lệ','e'); }
     input.value = '';
   };
