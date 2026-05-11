@@ -1799,7 +1799,7 @@ function renderHome() {
   const todayQuizzes= scores.filter(s=>s.date===todayISO||dateToISO(s.date||'')===todayISO).length;
   const todayFC     = activity.filter(a=>a.date===todayISO&&a.icon==='🃏').length;
   const goalWords=5, goalQuiz=1, goalFC=1;
-  const pct = Math.min(100, Math.round(((Math.min(todayWords,goalWords)/goalWords) + (Math.min(todayQuizzes,goalFC)/goalQuiz) + (Math.min(todayFC,goalFC)/goalFC))/3*100));
+  const pct = Math.min(100, Math.round(((Math.min(todayWords,goalWords)/goalWords) + (Math.min(todayQuizzes,goalQuiz)/goalQuiz) + (Math.min(todayFC,goalFC)/goalFC))/3*100));
   const card = document.getElementById('homeDailyCard');
   if(card) {
     const hasAny = todayWords>0||todayQuizzes>0||todayFC>0;
@@ -5223,14 +5223,14 @@ function renderListenQs(){
     const L=['A','B','C','D'];
     qa.innerHTML=qs.length?qs.map((q,i)=>`<div class="mc-q" id="mcq${i}">
       <div class="mc-qtext">${i+1}. ${esc(q.text)}</div>
-      <div class="mc-opts">${q.options.map((opt,j)=>`<div class="mc-opt" id="mco${i}_${j}" onclick="selMC(${i},${j})"><div class="mc-letter">${L[j]}</div>${esc(opt)}</div>`).join('')}</div>
+      <div class="mc-opts">${(q.options||[]).map((opt,j)=>`<div class="mc-opt" id="mco${i}_${j}" onclick="selMC(${i},${j})"><div class="mc-letter">${L[j]}</div>${esc(opt)}</div>`).join('')}</div>
     </div>`).join(''):'<div class="empty" style="padding:28px"><div class="empty-i" style="font-size:28px">🔘</div><div style="font-size:13px">Bài này chưa có câu trắc nghiệm</div></div>';
   }
 }
 function selMC(qi,oi){
   if(listenDone)return;
   document.querySelectorAll(`[id^="mco${qi}_"]`).forEach(e=>e.classList.remove('sel'));
-  document.getElementById(`mco${qi}_${oi}`).classList.add('sel');
+  document.getElementById(`mco${qi}_${oi}`)?.classList.add('sel');
 }
 let _listenSubmitting = false;
 async function submitListen(){
@@ -5247,7 +5247,7 @@ async function submitListen(){
     qs.forEach((q,i)=>{
       const inp=document.getElementById(`fa${i}`),fb=document.getElementById(`ff${i}`),item=document.getElementById(`fq${i}`);
       if(!inp)return;
-      const user=inp.value.trim().toLowerCase(),correct=q.answer.toLowerCase();
+      const user=inp.value.trim().toLowerCase(),correct=(q.answer||'').toLowerCase();
       inp.disabled=true;
       if(user===correct){score++;item.classList.add('fq-ok');fb.innerHTML=`<span style="color:var(--ok)">✅ Đúng!</span>`;}
       else{item.classList.add('fq-err');fb.innerHTML=`<span style="color:var(--err)">✖ Đáp án: <strong>${esc(q.answer)}</strong></span>${q.explain?` – <span style="color:var(--muted)">${esc(q.explain)}</span>`:''}`;}
@@ -5256,8 +5256,8 @@ async function submitListen(){
     const qs=curLesson.mcQuestions||[]; total=qs.length;
     qs.forEach((q,i)=>{
       let sel=-1;
-      for(let j=0;j<q.options.length;j++){const e=document.getElementById(`mco${i}_${j}`);if(e&&e.classList.contains('sel')){sel=j;break;}}
-      for(let j=0;j<q.options.length;j++){const e=document.getElementById(`mco${i}_${j}`);if(e){e.classList.add('dis');e.onclick=null;}}
+      for(let j=0;j<(q.options||[]).length;j++){const e=document.getElementById(`mco${i}_${j}`);if(e&&e.classList.contains('sel')){sel=j;break;}}
+      for(let j=0;j<(q.options||[]).length;j++){const e=document.getElementById(`mco${i}_${j}`);if(e){e.classList.add('dis');e.onclick=null;}}
       const okEl=document.getElementById(`mco${i}_${q.answer}`);if(okEl)okEl.classList.add('opt-ok');
       if(sel===q.answer)score++;
       else if(sel>=0){const se=document.getElementById(`mco${i}_${sel}`);if(se)se.classList.add('opt-err');}
@@ -7172,6 +7172,7 @@ function checkToeicPart() {
 
 function toeicBack(to) {
   clearInterval(_toeicTimer);
+  _toeicAnswers = {}; _toeicDone = false;
   if(to==='books') renderToeicBooks();
   else if(to==='tests') selectToeicBook(_toeicBookIdx);
   else if(to==='parts') selectToeicTest(_toeicTestIdx);
