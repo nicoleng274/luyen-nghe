@@ -7353,6 +7353,7 @@ function selectToeicPart(part) {
 
 function renderToeicPartQuestions(test, part) {
   const list = document.getElementById('toeicQList');
+  if (!list) return;
   const data = test['p'+part] || [];
   let html = '';
   const ABCD = ['A','B','C','D'];
@@ -7611,6 +7612,7 @@ function deleteToeicBook(idx) {
 // ── TOEIC: Scores history ──
 function openToeicScores() {
   const list = document.getElementById('toeicScoresList');
+  if (!list) return;
   if(!toeicHistory.length) { list.innerHTML='<div style="color:var(--muted);padding:24px;text-align:center">Chưa có lịch sử luyện tập</div>'; }
   else {
     list.innerHTML = [...toeicHistory].reverse().map(h=>`
