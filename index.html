@@ -1490,7 +1490,7 @@ audio{width:100%;accent-color:var(--accent)}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <div id="toeicSeriesFilter" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-s btn-sm" onclick="openToeicImport()">⬆ Import đề thi</button>
+        <button class="btn btn-s btn-sm" id="toeicImportBtn" style="display:none" onclick="openToeicImport()">⬆ Import đề thi</button>
         <button class="btn btn-g btn-sm" onclick="openToeicScores()">📊 Lịch sử</button>
       </div>
     </div>
@@ -1498,7 +1498,7 @@ audio{width:100%;accent-color:var(--accent)}
     <div id="toeicBooksEmpty" class="empty" style="display:none;padding:48px">
       <div class="empty-i">📝</div>
       <div>Chưa có sách nào</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:6px">Nhấn <strong>Import đề thi</strong> để thêm sách TOEIC</div>
+      <div id="toeicEmptyMsg" style="font-size:13px;color:var(--muted);margin-top:6px">Chưa có đề thi nào được đăng lên server</div>
     </div>
   </div>
 
@@ -1580,10 +1580,11 @@ audio{width:100%;accent-color:var(--accent)}
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
       <input id="gramSearch" class="if" placeholder="🔍 Tìm unit..." style="flex:1;min-width:160px" oninput="renderGrammarGrid()">
-      <label class="btn btn-s btn-sm" style="cursor:pointer">
+      <label class="btn btn-s btn-sm" id="gramImportLabel" style="cursor:pointer;display:none">
         📂 Import JSON
         <input type="file" accept=".json" style="display:none" onchange="importGrammarJSON(this)">
       </label>
+      <button class="btn btn-g btn-sm" id="gramPublishBtn" style="display:none" onclick="publishGrammarDB()">📤 Đăng lên server</button>
       <button class="btn btn-g btn-sm" onclick="renderGrammarExtractor()" id="gramExtractorBtn" style="display:none">⚙️ Extractor</button>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
@@ -1596,7 +1597,7 @@ audio{width:100%;accent-color:var(--accent)}
     <div id="gramEmpty" class="empty" style="display:none;padding:40px">
       <div class="empty-i">📗</div>
       <div>Chưa có dữ liệu</div>
-      <div style="font-size:12.5px;color:var(--muted);margin-top:6px">Nhấn <strong>Import JSON</strong> để tải file grammar</div>
+      <div id="gramEmptyMsg" style="font-size:12.5px;color:var(--muted);margin-top:6px">Chưa có grammar nào được đăng lên server</div>
     </div>
   </div>
 
@@ -6663,7 +6664,7 @@ async function loadFromCloud() {
 // ─── Shared public content (admin publishes → all users see) ─────────────────
 async function loadSharedContent() {
   if (!_currentUser || !_fbDB) return;
-  await Promise.all([loadSharedToeic(), loadSharedVocabPacks(), loadSharedLessons()]);
+  await Promise.all([loadSharedToeic(), loadSharedVocabPacks(), loadSharedLessons(), loadSharedGrammar()]);
 }
 
 async function loadSharedToeic() {
@@ -7207,8 +7208,12 @@ function renderToeicBooks() {
   const filter= document.getElementById('toeicSeriesFilter');
   if(!grid) return;
   const admin = isCloudAdmin();
+  const importBtn = document.getElementById('toeicImportBtn');
+  if (importBtn) importBtn.style.display = admin ? '' : 'none';
   const hasLocal = toeicBooks.length > 0;
   const hasShared = sharedToeicBooks.length > 0;
+  const emptyMsg = document.getElementById('toeicEmptyMsg');
+  if (emptyMsg) emptyMsg.innerHTML = admin ? 'Nhấn <strong>Import đề thi</strong> để thêm sách TOEIC' : 'Chưa có đề thi nào được đăng lên server';
   if(!hasLocal && !hasShared) { grid.innerHTML=''; empty.style.display='block'; filter.innerHTML=''; return; }
   empty.style.display='none';
 
@@ -7652,6 +7657,34 @@ const GE_PROG_KEY = 'eh_ge_prog';  // extractor progress
 
 function saveGrammarProgress() { localStorage.setItem(lsk('eh_gram_prog'), JSON.stringify(grammarProgress)); }
 
+async function publishGrammarDB() {
+  if (!isCloudAdmin() || !_fbDB || !grammarDB) return;
+  const json = JSON.stringify(grammarDB);
+  if (json.length > 950000) { showToast('File grammar quá lớn (> 950KB), không thể upload', 'e'); return; }
+  showToast('⏳ Đang upload grammar...', 'i');
+  try {
+    await _fbDB.collection('shared_grammar').doc('main').set({
+      data: json,
+      uploadedBy: _currentUser.email,
+      uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      unitCount: grammarDB.units?.length || 0
+    });
+    showToast('✅ Grammar đã được đăng lên server (' + (grammarDB.units?.length||0) + ' units)');
+  } catch(e) { showToast('Lỗi upload: ' + e.message, 'e'); }
+}
+
+async function loadSharedGrammar() {
+  if (!_fbDB) return;
+  try {
+    const doc = await _fbDB.collection('shared_grammar').doc('main').get();
+    if (doc.exists) {
+      const raw = doc.data().data;
+      grammarDB = JSON.parse(raw);
+      localStorage.setItem(lsk(GRAM_KEY), raw);
+    }
+  } catch(e) { console.error('Load shared grammar:', e); }
+}
+
 function loadGrammarDB() {
   if (grammarDB) return true;
   const raw = localStorage.getItem(lsk(GRAM_KEY));
@@ -7689,9 +7722,16 @@ function renderGrammarHome() {
   document.getElementById('gramBrowseView').style.display = '';
   document.getElementById('gramUnitView').style.display = 'none';
   document.getElementById('gramExtractorView').style.display = 'none';
+  const admin = isCloudAdmin();
+  const importLbl = document.getElementById('gramImportLabel');
+  if (importLbl) importLbl.style.display = admin ? '' : 'none';
   const extBtn = document.getElementById('gramExtractorBtn');
   if (extBtn) extBtn.style.display = _adminUnlocked ? 'inline-flex' : 'none';
   loadGrammarDB();
+  const publishBtn = document.getElementById('gramPublishBtn');
+  if (publishBtn) publishBtn.style.display = (admin && grammarDB) ? '' : 'none';
+  const emptyMsg = document.getElementById('gramEmptyMsg');
+  if (emptyMsg) emptyMsg.innerHTML = admin ? 'Nhấn <strong>Import JSON</strong> để tải file grammar' : 'Chưa có grammar nào được đăng lên server';
   renderGrammarGrid();
 }
 
