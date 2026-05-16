@@ -1794,6 +1794,7 @@ async function apiTranslateOne(text) {
 async function apiSynonyms(word) {
   try {
     const r = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(word)}&max=10`);
+    if(!r.ok) return [];
     const d = await r.json(); return d.map(w=>w.word);
   } catch(e){ return []; }
 }
@@ -1802,6 +1803,7 @@ async function apiSynonyms(word) {
 async function apiAntonyms(word) {
   try {
     const r = await fetch(`https://api.datamuse.com/words?rel_ant=${encodeURIComponent(word)}&max=8`);
+    if(!r.ok) return [];
     const d = await r.json(); return d.map(w=>w.word);
   } catch(e){ return []; }
 }
@@ -1839,9 +1841,12 @@ function ttsSpeak(word) {
 
 /* 7. Datamuse related phrases for phrase lookup */
 async function apiRelatedPhrases(phrase) {
-  const r = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(phrase)}&max=6`);
-  const d = await r.json();
-  return d.map(w=>w.word);
+  try {
+    const r = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(phrase)}&max=6`);
+    if(!r.ok) return [];
+    const d = await r.json();
+    return d.map(w=>w.word);
+  } catch(e){ return []; }
 }
 
 // ═══════════════════════════════════════════
@@ -2062,7 +2067,7 @@ function parseFreeDict(entries) {
       if(p.text&&!ipa) ipa=p.text;
       if(p.audio&&!audioUrl) audioUrl=p.audio;
     });
-    entry.meanings.forEach(m=>{
+    (entry.meanings||[]).forEach(m=>{
       const pos=m.partOfSpeech;
       if(!posGroups[pos]) posGroups[pos]=[];
       m.definitions.slice(0,3).forEach(d=>{
@@ -2962,7 +2967,7 @@ async function runBulkTopicImport() {
         // Merge: add missing POS meanings only
         const idx=vocabList.findIndex(v=>v.word===entry.word);
         if(idx>=0){
-          Object.entries(entry.meanings).forEach(([pos,defs])=>{
+          Object.entries(entry.meanings||{}).forEach(([pos,defs])=>{
             if(!vocabList[idx].meanings[pos]) vocabList[idx].meanings[pos]=defs;
             if(!vocabList[idx].viMeanings[pos]) vocabList[idx].viMeanings[pos]=entry.viMeanings[pos];
             if(!vocabList[idx].ipa&&entry.ipa) vocabList[idx].ipa=entry.ipa;
