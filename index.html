@@ -2120,7 +2120,7 @@ function renderVocabTable() {
 
   let filtered = vocabList.filter(v => {
     if(search) {
-      const wordMatch = v.word.toLowerCase().includes(search);
+      const wordMatch = (v.word||'').toLowerCase().includes(search);
       const exMatch   = (v.example||'').toLowerCase().includes(search);
       const defMatch  = Object.values(v.meanings||{}).flat().some(d=>(d||'').toLowerCase().includes(search));
       const viMatch   = Object.values(v.viMeanings||{}).flat().some(d=>(d||'').toLowerCase().includes(search));
@@ -2487,6 +2487,7 @@ function toggleLearnedFromPanel(word) {
 }
 
 function deleteVocab(word) {
+  if(!confirm(`Xóa từ "${word}" khỏi danh sách?`)) return;
   vocabList = vocabList.filter(v => v.word !== word);
   localStorage.setItem(lsk('eh_vocab'), JSON.stringify(vocabList));
   localStorage.removeItem(lsk('sr_' + word));
@@ -6621,6 +6622,7 @@ async function syncToCloud() {
   try {
     const sr = {};
     vocabList.forEach(v => {
+      if (!v.word) return;
       const s = localStorage.getItem(lsk('sr_'+v.word));
       if (s) { try { sr[v.word] = JSON.parse(s); } catch{} }
     });
