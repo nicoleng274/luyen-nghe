@@ -598,6 +598,21 @@ audio{width:100%;accent-color:var(--accent)}
 .toeic-opt-key{font-weight:800;min-width:18px;color:var(--muted)}
 .toeic-audio-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--s3);cursor:pointer;font-size:13px;margin-bottom:10px;transition:.15s}
 .toeic-audio-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* ── GRAMMAR ── */
+.gram-unit{cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);transition:.15s;text-align:center}
+.gram-unit:hover{border-color:var(--accent);background:var(--s3)}
+.gram-unit.done{border-color:var(--ok);background:rgba(61,219,165,.08)}
+.gram-unit.active{border-color:var(--accent);background:rgba(124,111,255,.12)}
+.gram-section{background:var(--s2);border-radius:10px;border:1px solid var(--border);margin-bottom:14px;overflow:hidden}
+.gram-section-hd{padding:10px 14px;font-weight:700;font-size:13.5px;background:rgba(124,111,255,.08);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.gram-section-body{padding:12px 14px;font-size:13.5px;line-height:1.8;white-space:pre-wrap}
+.gram-ex{background:var(--s2);border-radius:10px;border:1px solid var(--border);margin-bottom:12px}
+.gram-ex-hd{padding:10px 14px;font-size:13px;font-weight:700;background:var(--s3);border-bottom:1px solid var(--border);border-radius:10px 10px 0 0}
+.gram-q{padding:8px 14px;border-bottom:1px solid var(--border);font-size:13px;display:flex;align-items:flex-start;gap:8px}
+.gram-q:last-child{border-bottom:none}
+.gram-inp{background:var(--s3);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-family:inherit;font-size:13px;color:var(--text);min-width:80px;max-width:200px}
+.gram-inp.ok{border-color:var(--ok);background:rgba(61,219,165,.1)}
+.gram-inp.err{border-color:var(--err);background:rgba(255,107,138,.1)}
 </style>
 </head>
 <body>
@@ -627,6 +642,7 @@ audio{width:100%;accent-color:var(--accent)}
     <div class="ni" onclick="sp('listen')"><span class="ni-icon">🎧</span>Luyện nghe</div>
     <div class="ni" onclick="sp('scores')"><span class="ni-icon">📊</span>Điểm số</div>
     <div class="ni" onclick="sp('toeic')"><span class="ni-icon">📝</span>Luyện TOEIC</div>
+    <div class="ni" onclick="sp('grammar')"><span class="ni-icon">📗</span>Grammar</div>
   </nav>
   <div style="padding:8px 10px">
     <button id="profileBtn" onclick="openProfileModal()" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--text);font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left">👤 default</button>
@@ -1554,6 +1570,87 @@ audio{width:100%;accent-color:var(--accent)}
   </div>
 </section>
 
+<!-- GRAMMAR -->
+<section id="page-grammar" class="page">
+  <!-- Browse view -->
+  <div id="gramBrowseView">
+    <div class="ph">
+      <div class="pt">📗 <span>Grammar</span></div>
+      <div class="ps">Essential Grammar in Use — 114 units</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+      <input id="gramSearch" class="if" placeholder="🔍 Tìm unit..." style="flex:1;min-width:160px" oninput="renderGrammarGrid()">
+      <label class="btn btn-s btn-sm" style="cursor:pointer">
+        📂 Import JSON
+        <input type="file" accept=".json" style="display:none" onchange="importGrammarJSON(this)">
+      </label>
+      <button class="btn btn-g btn-sm" onclick="renderGrammarExtractor()" id="gramExtractorBtn" style="display:none">⚙️ Extractor</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="btn btn-sm" id="gfAll" style="border:1px solid var(--accent);color:var(--accent)" onclick="setGramFilter('all')">Tất cả</button>
+      <button class="btn btn-sm btn-g" id="gfDone" onclick="setGramFilter('done')">✅ Đã học</button>
+      <button class="btn btn-sm btn-g" id="gfTodo" onclick="setGramFilter('todo')">📌 Chưa học</button>
+    </div>
+    <div id="gramStats" style="font-size:12.5px;color:var(--muted);margin-bottom:12px"></div>
+    <div id="gramGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px"></div>
+    <div id="gramEmpty" class="empty" style="display:none;padding:40px">
+      <div class="empty-i">📗</div>
+      <div>Chưa có dữ liệu</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:6px">Nhấn <strong>Import JSON</strong> để tải file grammar</div>
+    </div>
+  </div>
+
+  <!-- Unit detail view -->
+  <div id="gramUnitView" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn btn-g btn-sm" onclick="gramBack()">← Danh sách</button>
+      <div id="gramUnitTitle" style="font-size:17px;font-weight:800;flex:1"></div>
+      <button id="gramMarkBtn" class="btn btn-sm" onclick="toggleGramUnit()" style="font-size:12px"></button>
+    </div>
+    <div id="gramUnitBody"></div>
+  </div>
+
+  <!-- Extractor view (admin only) -->
+  <div id="gramExtractorView" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button class="btn btn-g btn-sm" onclick="gramExtractorBack()">← Quay lại</button>
+      <div style="font-size:16px;font-weight:800">⚙️ Grammar Extractor</div>
+    </div>
+    <div class="card" style="padding:16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">Cấu hình</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <input id="gramApiKey" class="if" type="password" placeholder="Claude API Key (sk-ant-...)" style="flex:2;min-width:200px;font-size:13px">
+        <input id="gramServerUrl" class="if" placeholder="Image server URL" value="http://localhost:8765" style="flex:1;min-width:160px;font-size:13px">
+      </div>
+      <div id="gramServerStatus" style="font-size:12px;margin-bottom:10px;color:var(--muted)">⏳ Chưa kiểm tra server...</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-s btn-sm" onclick="gramTestServer()">🔌 Test Server</button>
+        <button class="btn btn-p" id="gramStartBtn" onclick="gramStartExtraction()">▶ Bắt đầu trích xuất</button>
+        <button class="btn btn-g btn-sm" id="gramStopBtn" onclick="gramStopExtraction()" style="display:none">⏹ Dừng</button>
+        <button class="btn btn-g btn-sm" onclick="gramDownloadPartial()">⬇ Download hiện tại</button>
+        <button class="btn btn-sm" style="color:var(--err);border:1px solid rgba(255,107,138,.3);background:none;margin-left:auto" onclick="gramResetProgress()">↺ Reset</button>
+      </div>
+    </div>
+    <!-- Progress bars -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="card" style="padding:12px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px"><span>Units</span><span id="geProg0" style="color:#3b82f6">0/114</span></div>
+        <div style="height:5px;background:var(--border);border-radius:3px"><div id="geBar0" style="height:100%;width:0%;background:#3b82f6;border-radius:3px;transition:width .3s"></div></div>
+      </div>
+      <div class="card" style="padding:12px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px"><span>Answer Pages</span><span id="geProg1" style="color:#8b5cf6">0/29</span></div>
+        <div style="height:5px;background:var(--border);border-radius:3px"><div id="geBar1" style="height:100%;width:0%;background:#8b5cf6;border-radius:3px;transition:width .3s"></div></div>
+      </div>
+      <div class="card" style="padding:12px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px"><span>Appendices</span><span id="geProg2" style="color:#f59e0b">0/7</span></div>
+        <div style="height:5px;background:var(--border);border-radius:3px"><div id="geBar2" style="height:100%;width:0%;background:#f59e0b;border-radius:3px;transition:width .3s"></div></div>
+      </div>
+    </div>
+    <div id="geCurrentTask" style="font-size:12px;color:var(--accent);margin-bottom:8px;min-height:18px"></div>
+    <div id="geLog" style="background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;max-height:240px;overflow-y:auto;font-size:11.5px;font-family:monospace"></div>
+  </div>
+</section>
+
 </main>
 <div id="toast" class="toast"></div>
 
@@ -1756,7 +1853,7 @@ function sp(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const pages = ['home','vocab','topics','flashcard','phrase','quiz','listen','scores','toeic'];
+  const pages = ['home','vocab','topics','flashcard','phrase','quiz','listen','scores','toeic','grammar'];
   const bnPages = ['home','vocab','topics','flashcard','quiz','listen'];
   pages.forEach((p,i)=>{
     if(p===id) document.querySelectorAll('.ni')[i].classList.add('active');
@@ -1771,6 +1868,7 @@ function sp(id) {
   if(id==='topics') renderTopicsPage();
   if(id==='vocab')  renderSharedVocabSection();
   if(id==='toeic')  renderToeicBooks();
+  if(id==='grammar') renderGrammarHome();
 }
 
 // ═══════════════════════════════════════════
@@ -7538,6 +7636,463 @@ function downloadToeicSample() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download='toeic-sample.json'; a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+// ═══════════════════════════════════════════
+//  GRAMMAR MODULE
+// ═══════════════════════════════════════════
+let grammarDB = null;        // { book, units:[], appendices:[] }
+let grammarProgress = _lsJSON2('eh_gram_prog', {});  // { [unitNum]: true }
+let _gramFilter = 'all';
+let _gramCurrentUnit = null;
+let _gramExtractorRunning = false;
+let _gramExtractorAbort = false;
+const GRAM_KEY = 'eh_grammar_db';
+const GE_PROG_KEY = 'eh_ge_prog';  // extractor progress
+
+function saveGrammarProgress() { localStorage.setItem(lsk('eh_gram_prog'), JSON.stringify(grammarProgress)); }
+
+function loadGrammarDB() {
+  if (grammarDB) return true;
+  const raw = localStorage.getItem(lsk(GRAM_KEY));
+  if (!raw) return false;
+  try { grammarDB = JSON.parse(raw); return true; } catch { return false; }
+}
+
+function importGrammarJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.units || !Array.isArray(data.units)) throw new Error('Không tìm thấy mảng units');
+      grammarDB = data;
+      localStorage.setItem(lsk(GRAM_KEY), e.target.result);
+      showToast(`✅ Đã import ${data.units.length} units grammar`);
+      renderGrammarHome();
+    } catch(err) { showToast('File không hợp lệ: ' + err.message, 'e'); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function setGramFilter(f) {
+  _gramFilter = f;
+  ['All','Done','Todo'].forEach(x => {
+    const el = document.getElementById('gf'+x);
+    if (el) { el.style.borderColor = f===x.toLowerCase() ? 'var(--accent)' : 'var(--border)'; el.style.color = f===x.toLowerCase() ? 'var(--accent)' : ''; el.className = f===x.toLowerCase() ? 'btn btn-sm' : 'btn btn-sm btn-g'; }
+  });
+  renderGrammarGrid();
+}
+
+function renderGrammarHome() {
+  document.getElementById('gramBrowseView').style.display = '';
+  document.getElementById('gramUnitView').style.display = 'none';
+  document.getElementById('gramExtractorView').style.display = 'none';
+  const extBtn = document.getElementById('gramExtractorBtn');
+  if (extBtn) extBtn.style.display = _adminUnlocked ? 'inline-flex' : 'none';
+  loadGrammarDB();
+  renderGrammarGrid();
+}
+
+function renderGrammarGrid() {
+  const grid = document.getElementById('gramGrid');
+  const empty = document.getElementById('gramEmpty');
+  const stats = document.getElementById('gramStats');
+  if (!grid) return;
+  if (!grammarDB || !grammarDB.units.length) {
+    grid.innerHTML = ''; empty.style.display = 'block'; stats.textContent = '';
+    return;
+  }
+  empty.style.display = 'none';
+  const q = (document.getElementById('gramSearch')?.value || '').toLowerCase();
+  const doneCount = Object.keys(grammarProgress).length;
+  stats.textContent = `${doneCount}/${grammarDB.units.length} units đã học (${grammarDB.units.length ? Math.round(doneCount/grammarDB.units.length*100) : 0}%)`;
+  const units = grammarDB.units.filter(u => {
+    if (_gramFilter === 'done' && !grammarProgress[u.unit_number]) return false;
+    if (_gramFilter === 'todo' && grammarProgress[u.unit_number]) return false;
+    if (q) return (u.title||'').toLowerCase().includes(q) || String(u.unit_number).includes(q) || (u.topic||'').toLowerCase().includes(q);
+    return true;
+  });
+  grid.innerHTML = units.map(u => {
+    const done = grammarProgress[u.unit_number];
+    return `<div class="gram-unit ${done?'done':''}" onclick="openGrammarUnit(${u.unit_number})">
+      <div style="font-size:11px;font-weight:800;color:var(--muted)">${u.unit_number}</div>
+      <div style="font-size:11.5px;font-weight:600;margin-top:2px;line-height:1.3">${esc(u.title||'')}</div>
+      ${done?'<div style="font-size:10px;color:var(--ok);margin-top:3px">✓</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function openGrammarUnit(num) {
+  if (!grammarDB) return;
+  const unit = grammarDB.units.find(u => u.unit_number === num);
+  if (!unit) return;
+  _gramCurrentUnit = unit;
+  document.getElementById('gramBrowseView').style.display = 'none';
+  document.getElementById('gramUnitView').style.display = '';
+  document.getElementById('gramExtractorView').style.display = 'none';
+  document.getElementById('gramUnitTitle').textContent = `Unit ${unit.unit_number}: ${unit.title||''}`;
+  const markBtn = document.getElementById('gramMarkBtn');
+  if (markBtn) {
+    const done = grammarProgress[num];
+    markBtn.textContent = done ? '✅ Đã học' : '📌 Đánh dấu đã học';
+    markBtn.style.background = done ? 'rgba(61,219,165,.12)' : '';
+    markBtn.style.borderColor = done ? 'var(--ok)' : 'var(--border)';
+    markBtn.style.color = done ? 'var(--ok)' : '';
+  }
+  renderGrammarUnit(unit);
+}
+
+function renderGrammarUnit(unit) {
+  const body = document.getElementById('gramUnitBody');
+  if (!body) return;
+  let html = '';
+  // Related units
+  if ((unit.related_units||[]).length) {
+    html += `<div style="font-size:12px;color:var(--muted);margin-bottom:14px">📎 Liên quan: ${unit.related_units.map(n=>`<span style="cursor:pointer;color:var(--accent)" onclick="openGrammarUnit(${n})">Unit ${n}</span>`).join(', ')}</div>`;
+  }
+  // Grammar points (theory)
+  if ((unit.grammar_points||[]).length) {
+    html += `<div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Lý thuyết</div>`;
+    unit.grammar_points.forEach(p => {
+      html += `<div class="gram-section">
+        <div class="gram-section-hd">
+          ${p.section?`<span style="background:var(--accent);color:#fff;border-radius:5px;padding:1px 8px;font-size:11px">${esc(p.section)}</span>`:''}
+          <span>${esc(p.label||'')}</span>
+        </div>
+        <div class="gram-section-body">${esc(p.explanation||'')}${(p.examples||[]).length?'\n\n'+p.examples.map(e=>`  → ${e}`).join('\n'):''}</div>
+      </div>`;
+    });
+  }
+  // Exercises
+  if ((unit.exercises||[]).length) {
+    html += `<div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 10px">Bài tập</div>`;
+    unit.exercises.forEach((ex, ei) => {
+      const exId = esc(ex.exercise_number||String(ei+1));
+      html += `<div class="gram-ex" id="gex_${exId}">
+        <div class="gram-ex-hd">
+          <span style="color:var(--accent);margin-right:8px">${exId}</span>${esc(ex.instruction||'')}
+          ${(ex.word_bank||[]).length?`<div style="margin-top:6px;font-size:12px;color:var(--muted)">📦 ${ex.word_bank.map(w=>`<code style="background:var(--s3);padding:1px 5px;border-radius:3px;margin-right:4px">${esc(w)}</code>`).join('')}</div>`:''}
+        </div>`;
+      (ex.questions||[]).forEach((q, qi) => {
+        const parts = (q.prompt||'').split('___');
+        let qHtml = `<div class="gram-q"><span style="min-width:22px;font-weight:700;color:var(--muted);font-size:12px">${q.id||qi+1}.</span><div style="flex:1">`;
+        if (parts.length > 1) {
+          parts.forEach((part, pi) => {
+            qHtml += esc(part);
+            if (pi < parts.length - 1) {
+              qHtml += `<input class="gram-inp" data-exid="${exId}" data-qid="${q.id||qi+1}" data-ans="${esc(q.answer||'')}" onkeydown="if(event.key==='Enter')checkGramQ(this)" placeholder="...">`;
+            }
+          });
+        } else {
+          qHtml += esc(q.prompt||'');
+          qHtml += ` <input class="gram-inp" style="min-width:120px" data-exid="${exId}" data-qid="${q.id||qi+1}" data-ans="${esc(q.answer||'')}" onkeydown="if(event.key==='Enter')checkGramQ(this)" placeholder="Nhập đáp án">`;
+        }
+        qHtml += `<span id="gfb_${exId}_${q.id||qi+1}" style="font-size:11.5px;margin-left:8px"></span></div></div>`;
+        html += qHtml;
+      });
+      html += `<div style="padding:10px 14px;display:flex;gap:8px">
+        <button class="btn btn-s btn-sm" onclick="checkGramExercise('${exId}')">✅ Kiểm tra</button>
+        <button class="btn btn-g btn-sm" onclick="showGramAnswers('${exId}')">👁 Xem đáp án</button>
+        <button class="btn btn-g btn-sm" onclick="resetGramExercise('${exId}')">↺ Làm lại</button>
+      </div></div>`;
+    });
+  }
+  body.innerHTML = html || '<div class="empty" style="padding:32px"><div class="empty-i">📗</div><div>Unit này chưa có dữ liệu</div></div>';
+}
+
+function checkGramQ(inp) {
+  const ans = (inp.dataset.ans||'').trim().toLowerCase();
+  const val = inp.value.trim().toLowerCase();
+  if (!val) return;
+  const parts = ans.split('/').map(s=>s.trim());
+  const ok = parts.some(p => p === val);
+  inp.className = 'gram-inp ' + (ok ? 'ok' : 'err');
+  const fb = document.getElementById(`gfb_${inp.dataset.exid}_${inp.dataset.qid}`);
+  if (fb) fb.innerHTML = ok ? '<span style="color:var(--ok)">✓</span>' : `<span style="color:var(--err)">✗ ${esc(ans)}</span>`;
+}
+
+function checkGramExercise(exId) {
+  document.querySelectorAll(`[data-exid="${exId}"]`).forEach(inp => {
+    inp.value = inp.value.trim();
+    if (inp.value) checkGramQ(inp);
+  });
+}
+
+function showGramAnswers(exId) {
+  document.querySelectorAll(`[data-exid="${exId}"]`).forEach(inp => {
+    inp.value = inp.dataset.ans || '';
+    inp.className = 'gram-inp ok';
+    const fb = document.getElementById(`gfb_${exId}_${inp.dataset.qid}`);
+    if (fb) fb.innerHTML = '<span style="color:var(--muted);font-size:10.5px">đáp án</span>';
+  });
+}
+
+function resetGramExercise(exId) {
+  document.querySelectorAll(`[data-exid="${exId}"]`).forEach(inp => {
+    inp.value = ''; inp.className = 'gram-inp';
+    const fb = document.getElementById(`gfb_${exId}_${inp.dataset.qid}`);
+    if (fb) fb.innerHTML = '';
+  });
+}
+
+function toggleGramUnit() {
+  if (!_gramCurrentUnit) return;
+  const num = _gramCurrentUnit.unit_number;
+  if (grammarProgress[num]) { delete grammarProgress[num]; }
+  else { grammarProgress[num] = true; }
+  saveGrammarProgress();
+  const btn = document.getElementById('gramMarkBtn');
+  const done = grammarProgress[num];
+  if (btn) { btn.textContent = done ? '✅ Đã học' : '📌 Đánh dấu đã học'; btn.style.color = done ? 'var(--ok)' : ''; btn.style.borderColor = done ? 'var(--ok)' : 'var(--border)'; }
+}
+
+function gramBack() { renderGrammarHome(); }
+
+// ── Grammar Extractor (admin only) ───────────────────────────────────────────
+const GE_UNIT_CHUNKS = [
+  {chunk:0,pages:[9,10,11,12,13,14,15,16,17,18,19,20]},{chunk:1,pages:[21,22,23,24,25,26,27,28,29,30,31,32]},
+  {chunk:2,pages:[33,34,35,36,37,38,39,40,41,42,43,44]},{chunk:3,pages:[45,46,47,48,49,50,51,52,53,54,55,56]},
+  {chunk:4,pages:[57,58,59,60,61,62,63,64,65,66,67,68]},{chunk:5,pages:[69,70,71,72,73,74,75,76,77,78,79,80]},
+  {chunk:6,pages:[81,82,83,84,85,86,87,88,89,90,91,92]},{chunk:7,pages:[93,94,95,96,97,98,99,100,101,102,103,104]},
+  {chunk:8,pages:[105,106,107,108,109,110,111,112,113,114,115,116]},{chunk:9,pages:[117,118,119,120,121,122,123,124,125,126,127,128]},
+  {chunk:10,pages:[129,130,131,132,133,134,135,136,137,138,139,140]},{chunk:11,pages:[141,142,143,144,145,146,147,148,149,150,151,152]},
+  {chunk:12,pages:[153,154,155,156,157,158,159,160,161,162,163,164]},{chunk:13,pages:[165,166,167,168,169,170,171,172,173,174,175,176]},
+  {chunk:14,pages:[177,178,179,180,181,182,183,184,185,186,187,188]},{chunk:15,pages:[189,190,191,192,193,194,195,196,197,198,199,200]},
+  {chunk:16,pages:[201,202,203,204,205,206,207,208,209,210,211,212]},{chunk:17,pages:[213,214,215,216,217,218,219,220,221,222,223,224]},
+  {chunk:18,pages:[225,226,227,228,229,230,231,232,233,234,235,236]},{chunk:19,pages:[237,238,239,240,241,242,243,244,245,246,247,248]},
+  {chunk:20,pages:[249,250,251,252,253,254,255,256,257,258,259,260]},{chunk:21,pages:[261,262,263,264,265,266,267,268,269,270,271,272]},
+  {chunk:22,pages:[273,274,275,276,277,278,279,280,281,282,283,284]},{chunk:23,pages:[285,286,287,288,289,290,291]},
+];
+const _geChunkCache = {};
+function geGetChunkForPage(p){ return GE_UNIT_CHUNKS.find(c=>c.pages.includes(p)); }
+
+async function geGetPageB64(pageNum) {
+  const meta = geGetChunkForPage(pageNum);
+  if (!meta) throw new Error('Không tìm thấy chunk cho trang ' + pageNum);
+  if (!_geChunkCache[meta.chunk]) {
+    const url = document.getElementById('gramServerUrl')?.value?.trim() || 'http://localhost:8765';
+    const resp = await fetch(`${url}/chunk_${String(meta.chunk).padStart(2,'0')}.json`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} khi tải chunk ${meta.chunk}`);
+    _geChunkCache[meta.chunk] = await resp.json();
+  }
+  const b64 = _geChunkCache[meta.chunk][String(pageNum)];
+  if (!b64) throw new Error(`Trang ${pageNum} không có trong chunk`);
+  return b64;
+}
+
+async function geCallClaude(imagesB64, prompt) {
+  const apiKey = document.getElementById('gramApiKey')?.value?.trim();
+  if (!apiKey) throw new Error('Chưa nhập API key');
+  const content = imagesB64.map(b64=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}}));
+  content.push({type:'text',text:prompt});
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4096,messages:[{role:'user',content}]})
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      const text = data.content[0].text.trim().replace(/^```[a-z]*\n?/,'').replace(/```$/,'').trim();
+      return JSON.parse(text);
+    }
+    if (resp.status===429||resp.status===529) { await new Promise(r=>setTimeout(r,30000*(attempt+1))); continue; }
+    throw new Error(`API ${resp.status}: ${(await resp.text()).slice(0,120)}`);
+  }
+  throw new Error('Hết lần thử');
+}
+
+const GE_UNIT_PROMPT = `These two images are: [1] theory page and [2] exercises page from "Essential Grammar in Use".
+Extract ALL content. Return ONLY this JSON (no markdown):
+{"unit_number":<int>,"title":"<title>","topic":"<topic>","grammar_points":[{"section":"<A/B/C>","label":"<label>","explanation":"<text>","examples":["<ex1>"],"table":null}],"exercises":[{"exercise_number":"<1.1>","type":"<fill_in_blank|multiple_choice|...>","instruction":"<text>","word_bank":null,"questions":[{"id":<int>,"prompt":"<text with ___ for blanks>","answer":""}]}],"related_units":[<ints>]}
+Rules: use ___ for blanks. Return JSON only.`;
+
+const GE_ANSWER_PROMPT = `This is a "Key to Exercises" page. Extract ALL answers.
+Return ONLY: {"answers":{"<unit_str>":{"<ex_id>":{"<q_num_str>":"<answer>"}}}}
+Example: {"answers":{"1":{"1.1":{"2":"they're"}}}}
+Include answer variants with /. Return JSON only.`;
+
+const GE_APPENDIX_PROMPT = `Appendix page from grammar book. Extract all content.
+Return ONLY: {"appendix_number":<int>,"title":"<title>","sections":[{"heading":"<h>","content":"<text>","rows":[["<c1>","<c2>"]]}]}`;
+
+function geLog(msg, type='info') {
+  const el = document.getElementById('geLog');
+  if (!el) return;
+  const colors = {success:'#4ade80',error:'#f87171',header:'#60a5fa',warn:'#fbbf24',info:'#94a3b8'};
+  const time = new Date().toLocaleTimeString();
+  el.innerHTML += `<div style="color:${colors[type]||colors.info};margin-bottom:2px"><span style="color:#475569;margin-right:6px">${time}</span>${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function geUpdateProgress(prog) {
+  const u=prog.completedUnits||[], a=prog.completedAnswerPages||[], x=prog.completedAppendices||[];
+  const p0=document.getElementById('geProg0'),b0=document.getElementById('geBar0');
+  const p1=document.getElementById('geProg1'),b1=document.getElementById('geBar1');
+  const p2=document.getElementById('geProg2'),b2=document.getElementById('geBar2');
+  if(p0){p0.textContent=`${u.length}/114`;b0.style.width=`${u.length/114*100}%`;}
+  if(p1){p1.textContent=`${a.length}/29`;b1.style.width=`${a.length/29*100}%`;}
+  if(p2){p2.textContent=`${x.length}/7`;b2.style.width=`${x.length/7*100}%`;}
+}
+
+function geLoadProgress() {
+  try { return JSON.parse(localStorage.getItem(lsk(GE_PROG_KEY))||'null') || {completedUnits:[],completedAnswerPages:[],completedAppendices:[]}; } catch { return {completedUnits:[],completedAnswerPages:[],completedAppendices:[]}; }
+}
+function geSaveProgress(prog) { localStorage.setItem(lsk(GE_PROG_KEY), JSON.stringify(prog)); }
+
+async function gramTestServer() {
+  const url = document.getElementById('gramServerUrl')?.value?.trim() || 'http://localhost:8765';
+  const el = document.getElementById('gramServerStatus');
+  if (el) el.textContent = '⏳ Đang kiểm tra...';
+  try {
+    const resp = await fetch(`${url}/chunk_00.json`);
+    if (resp.ok) { if(el) el.innerHTML='<span style="color:var(--ok)">✅ Server đang chạy</span>'; }
+    else { if(el) el.innerHTML=`<span style="color:var(--err)">❌ Lỗi HTTP ${resp.status}</span>`; }
+  } catch { if(el) el.innerHTML=`<span style="color:var(--err)">❌ Không kết nối được. Chạy: python3 -m http.server 8765 --directory /path/to/chunks</span>`; }
+}
+
+function renderGrammarExtractor() {
+  if (!_adminUnlocked) return;
+  document.getElementById('gramBrowseView').style.display='none';
+  document.getElementById('gramUnitView').style.display='none';
+  document.getElementById('gramExtractorView').style.display='';
+  const prog = geLoadProgress();
+  geUpdateProgress(prog);
+  gramTestServer();
+}
+function gramExtractorBack() { renderGrammarHome(); }
+
+async function gramStartExtraction() {
+  if (_gramExtractorRunning) return;
+  _gramExtractorRunning = true; _gramExtractorAbort = false;
+  document.getElementById('gramStartBtn').style.display='none';
+  document.getElementById('gramStopBtn').style.display='';
+  const prog = geLoadProgress();
+  geUpdateProgress(prog);
+
+  // Phase 1: Units
+  geLog('═══ Phase 1: Units ═══', 'header');
+  for (let u = 1; u <= 114; u++) {
+    if (_gramExtractorAbort) { geLog('⏹ Dừng bởi người dùng','warn'); break; }
+    if (prog.completedUnits.includes(u)) continue;
+    document.getElementById('geCurrentTask').textContent = `⟳ Unit ${u}/114...`;
+    try {
+      const tp = 7 + u*2, ep = 8 + u*2;
+      const [tb64, eb64] = await Promise.all([geGetPageB64(tp), geGetPageB64(ep)]);
+      const data = await geCallClaude([tb64,eb64], GE_UNIT_PROMPT);
+      data.unit_number = u;
+      localStorage.setItem(lsk(`ge_unit_${u}`), JSON.stringify(data));
+      prog.completedUnits.push(u); geSaveProgress(prog); geUpdateProgress(prog);
+      geLog(`✓ Unit ${u}: "${data.title}" (${(data.exercises||[]).length} bài tập)`,'success');
+    } catch(e) { geLog(`✗ Unit ${u}: ${e.message}`,'error'); }
+    await new Promise(r=>setTimeout(r,1000));
+  }
+
+  if (!_gramExtractorAbort) {
+    // Phase 2: Answers
+    geLog('═══ Phase 2: Answer Key ═══','header');
+    for (let p = 263; p <= 291; p++) {
+      if (_gramExtractorAbort) break;
+      if (prog.completedAnswerPages.includes(p)) continue;
+      document.getElementById('geCurrentTask').textContent = `⟳ Answer page ${p}...`;
+      try {
+        const b64 = await geGetPageB64(p);
+        const data = await geCallClaude([b64], GE_ANSWER_PROMPT);
+        localStorage.setItem(lsk(`ge_ans_${p}`), JSON.stringify(data));
+        prog.completedAnswerPages.push(p); geSaveProgress(prog); geUpdateProgress(prog);
+        geLog(`✓ Answer page ${p}: units ${Object.keys(data.answers||{}).join(',')}`,'success');
+      } catch(e) { geLog(`✗ Answer page ${p}: ${e.message}`,'error'); }
+      await new Promise(r=>setTimeout(r,1000));
+    }
+  }
+
+  if (!_gramExtractorAbort) {
+    // Phase 3: Appendices
+    geLog('═══ Phase 3: Appendices ═══','header');
+    const APP_MAP = {1:[237,238],2:[239],3:[240],4:[241],5:[243,244],6:[245],7:[246]};
+    for (const [num, pages] of Object.entries(APP_MAP)) {
+      if (_gramExtractorAbort) break;
+      const n = parseInt(num);
+      if (prog.completedAppendices.includes(n)) continue;
+      document.getElementById('geCurrentTask').textContent = `⟳ Appendix ${n}...`;
+      try {
+        const b64s = await Promise.all(pages.map(p=>geGetPageB64(p)));
+        const data = await geCallClaude(b64s, GE_APPENDIX_PROMPT);
+        data.appendix_number = n;
+        localStorage.setItem(lsk(`ge_appendix_${n}`), JSON.stringify(data));
+        prog.completedAppendices.push(n); geSaveProgress(prog); geUpdateProgress(prog);
+        geLog(`✓ Appendix ${n}: "${data.title}"`,'success');
+      } catch(e) { geLog(`✗ Appendix ${n}: ${e.message}`,'error'); }
+      await new Promise(r=>setTimeout(r,1000));
+    }
+  }
+
+  if (!_gramExtractorAbort) {
+    geLog('═══ Phase 4: Building JSON ═══','header');
+    document.getElementById('geCurrentTask').textContent = '⟳ Gộp dữ liệu...';
+    try {
+      const result = geBuildfinalJSON();
+      grammarDB = result;
+      localStorage.setItem(lsk(GRAM_KEY), JSON.stringify(result));
+      geLog(`✅ HOÀN THÀNH! ${result.units.length} units, ${result.appendices.length} appendices`,'success');
+    } catch(e) { geLog(`✗ Merge lỗi: ${e.message}`,'error'); }
+  }
+
+  _gramExtractorRunning = false;
+  document.getElementById('gramStartBtn').style.display='';
+  document.getElementById('gramStopBtn').style.display='none';
+  document.getElementById('geCurrentTask').textContent = '';
+}
+
+function gramStopExtraction() { _gramExtractorAbort = true; }
+
+function geBuildfinalJSON() {
+  const units = [];
+  for (let i = 1; i <= 114; i++) {
+    const r = localStorage.getItem(lsk(`ge_unit_${i}`));
+    if (r) { try { units.push(JSON.parse(r)); } catch {} }
+  }
+  const answers = {};
+  for (let p = 263; p <= 291; p++) {
+    const r = localStorage.getItem(lsk(`ge_ans_${p}`));
+    if (r) { try { const d=JSON.parse(r); if(d.answers) for(const[u,ex] of Object.entries(d.answers)){if(!answers[u])answers[u]={};Object.assign(answers[u],ex);} } catch {} }
+  }
+  const appendices = [];
+  for (let i = 1; i <= 7; i++) {
+    const r = localStorage.getItem(lsk(`ge_appendix_${i}`));
+    if (r) { try { appendices.push(JSON.parse(r)); } catch {} }
+  }
+  // Inject answers
+  for (const unit of units) {
+    const ua = answers[String(unit.unit_number)]||{};
+    for (const ex of (unit.exercises||[])) {
+      const ea = ua[ex.exercise_number]||{};
+      for (const q of (ex.questions||[])) { if (ea[String(q.id)] && !q.answer) q.answer = ea[String(q.id)]; }
+    }
+  }
+  return {book:{title:'Essential Grammar in Use',author:'Raymond Murphy',publisher:'Cambridge University Press',level:'Elementary',total_units:114},units:units.sort((a,b)=>a.unit_number-b.unit_number),appendices,metadata:{units_extracted:units.length,appendices_extracted:appendices.length,generated_by:'Claude Vision API'}};
+}
+
+function gramDownloadPartial() {
+  try {
+    const result = geBuildfinalJSON();
+    const blob = new Blob([JSON.stringify(result,null,2)],{type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=`grammar_${result.units.length}units.json`; a.click();
+    URL.revokeObjectURL(url);
+    geLog(`⬇ Downloaded ${result.units.length} units`,'success');
+  } catch(e) { geLog('Download lỗi: '+e.message,'error'); }
+}
+
+function gramResetProgress() {
+  if (!confirm('Xoá toàn bộ tiến trình trích xuất?')) return;
+  for (let i=1;i<=114;i++) try{localStorage.removeItem(lsk(`ge_unit_${i}`));}catch{}
+  for (let p=263;p<=291;p++) try{localStorage.removeItem(lsk(`ge_ans_${p}`));}catch{}
+  for (let i=1;i<=7;i++) try{localStorage.removeItem(lsk(`ge_appendix_${i}`));}catch{}
+  localStorage.removeItem(lsk(GE_PROG_KEY));
+  geLog('Đã reset tiến trình','warn');
+  geUpdateProgress({completedUnits:[],completedAnswerPages:[],completedAppendices:[]});
 }
 
 </script>
