@@ -7277,7 +7277,7 @@ function selectToeicBook(idx, isShared) {
   document.getElementById('toeicTestsTitle').textContent = book.name;
   const grid = document.getElementById('toeicTestsGrid');
   grid.innerHTML = (book.tests||[]).map((t,ti)=>{
-    const done = toeicHistory.filter(h=>h.bookIdx===idx&&h.testIdx===ti);
+    const done = toeicHistory.filter(h=>h.bookIdx===idx&&h.testIdx===ti&&(!!h._shared===!!isShared));
     const doneCount = [...new Set(done.map(h=>h.part))].length;
     return `<div class="toeic-test-card" onclick="selectToeicTest(${ti})">
       <div style="font-size:15px;font-weight:700;margin-bottom:6px">${esc(t.name||'Test '+(ti+1))}</div>
@@ -7299,7 +7299,7 @@ function selectToeicTest(ti) {
     const key = 'p'+p;
     const qs = getPartQuestions(test, parseInt(p));
     const count = qs.length;
-    const hist = toeicHistory.find(h=>h.bookIdx===_toeicBookIdx&&h.testIdx===ti&&h.part===parseInt(p));
+    const hist = toeicHistory.find(h=>h.bookIdx===_toeicBookIdx&&h.testIdx===ti&&h.part===parseInt(p)&&(!!h._shared===_toeicIsShared));
     return `<button class="toeic-part-btn${hist?' done':''}" onclick="selectToeicPart(${p})">
       <span style="font-size:18px">${info.type==='listen'?'🔊':'📖'}</span>
       <span style="font-size:13.5px;font-weight:700">${info.name}</span>
