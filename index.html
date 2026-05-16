@@ -7594,6 +7594,7 @@ function saveToeicImport() {
   _toeicPendingBook = null;
 }
 function deleteToeicBook(idx) {
+  if (!isCloudAdmin() && !_adminUnlocked) return;
   const b = toeicBooks[idx];
   if(!b||!confirm(`Xóa sách "${b.name}"?`)) return;
   toeicBooks.splice(idx,1);
@@ -7658,7 +7659,7 @@ const GE_PROG_KEY = 'eh_ge_prog';  // extractor progress
 function saveGrammarProgress() { localStorage.setItem(lsk('eh_gram_prog'), JSON.stringify(grammarProgress)); }
 
 async function publishGrammarDB() {
-  if (!isCloudAdmin() || !_fbDB || !grammarDB) return;
+  if (!isCloudAdmin() || !_currentUser || !_fbDB || !grammarDB) return;
   const json = JSON.stringify(grammarDB);
   if (json.length > 950000) { showToast('File grammar quá lớn (> 950KB), không thể upload', 'e'); return; }
   showToast('⏳ Đang upload grammar...', 'i');
@@ -7679,8 +7680,12 @@ async function loadSharedGrammar() {
     const doc = await _fbDB.collection('shared_grammar').doc('main').get();
     if (doc.exists) {
       const raw = doc.data().data;
-      grammarDB = JSON.parse(raw);
-      localStorage.setItem(lsk(GRAM_KEY), raw);
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.units)) {
+        grammarDB = parsed;
+        localStorage.setItem(lsk(GRAM_KEY), raw);
+        if (document.getElementById('gramBrowseView')?.style.display !== 'none') renderGrammarGrid();
+      }
     }
   } catch(e) { console.error('Load shared grammar:', e); }
 }
@@ -7729,7 +7734,7 @@ function renderGrammarHome() {
   if (extBtn) extBtn.style.display = _adminUnlocked ? 'inline-flex' : 'none';
   loadGrammarDB();
   const publishBtn = document.getElementById('gramPublishBtn');
-  if (publishBtn) publishBtn.style.display = (admin && grammarDB) ? '' : 'none';
+  if (publishBtn) publishBtn.style.display = (admin && grammarDB && Array.isArray(grammarDB.units) && grammarDB.units.length) ? '' : 'none';
   const emptyMsg = document.getElementById('gramEmptyMsg');
   if (emptyMsg) emptyMsg.innerHTML = admin ? 'Nhấn <strong>Import JSON</strong> để tải file grammar' : 'Chưa có grammar nào được đăng lên server';
   renderGrammarGrid();
@@ -7740,7 +7745,7 @@ function renderGrammarGrid() {
   const empty = document.getElementById('gramEmpty');
   const stats = document.getElementById('gramStats');
   if (!grid) return;
-  if (!grammarDB || !grammarDB.units.length) {
+  if (!grammarDB || !Array.isArray(grammarDB.units) || !grammarDB.units.length) {
     grid.innerHTML = ''; empty.style.display = 'block'; stats.textContent = '';
     return;
   }
