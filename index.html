@@ -3380,7 +3380,8 @@ function selectMCOpt(qi,oi,correct) {
   document.querySelectorAll(`[id^="mc${qi}_"]`).forEach(el=>el.classList.add('disabled'));
   document.getElementById(`mc${qi}_${correct}`)?.classList.add('opt-ok');
   if(oi!==correct) document.getElementById(`mc${qi}_${oi}`)?.classList.add('opt-err');
-  document.getElementById(`qr${qi}`).innerHTML=oi===correct
+  const qrEl=document.getElementById(`qr${qi}`);
+  if(qrEl) qrEl.innerHTML=oi===correct
     ?'<span style="color:var(--ok)">✅ Đúng!</span>'
     :'<span style="color:var(--err)">✖ Sai</span>';
   const answered=quizData.filter((_,i)=>document.getElementById(`qi${i}`)?.querySelector('.opt-ok')).length;
@@ -3523,8 +3524,8 @@ async function checkQuiz() {
     const user=inp.value.trim().toLowerCase(),correct=item.word.toLowerCase();
     inp.disabled=true;
     const qi=document.getElementById(`qi${i}`);
-    if(user===correct){score++;qi?.classList.add('correct');res.innerHTML='<span style="color:var(--ok)">✅ Đúng</span>';}
-    else{qi?.classList.add('wrong');res.innerHTML=`<span style="color:var(--err)">✖ Bạn: <em>${esc(user)||'(để trống)'}</em></span> <span style="color:var(--ok)">→ Đúng: <strong>${esc(correct)}</strong></span>`;_quizWrongWords.push(item);}
+    if(user===correct){score++;qi?.classList.add('correct');if(res)res.innerHTML='<span style="color:var(--ok)">✅ Đúng</span>';}
+    else{qi?.classList.add('wrong');if(res)res.innerHTML=`<span style="color:var(--err)">✖ Bạn: <em>${esc(user)||'(để trống)'}</em></span> <span style="color:var(--ok)">→ Đúng: <strong>${esc(correct)}</strong></span>`;_quizWrongWords.push(item);}
     if(item.ipa&&ipa)ipa.textContent=item.ipa;
   });
   document.getElementById('qPBar').style.width='100%';
@@ -5272,6 +5273,7 @@ function selectLesson(key){
   document.getElementById('lTags').innerHTML=`<span class="lh-tag lht-blue">${esc(l.level||'General')}</span><span class="lh-tag lht-green">${(l.questions||[]).length} câu điền</span><span class="lh-tag lht-blue">${(l.mcQuestions||[]).length} câu trắc nghiệm</span>${_lBest!==null?`<span class="lh-tag" style="background:rgba(61,219,165,.15);color:var(--ok)">🏆 Tốt nhất: ${_lBest}%</span><span class="lh-tag" style="background:rgba(124,111,255,.1);color:var(--muted)">${_lScores.length} lần làm</span>`:''}`;
   document.getElementById('lMediaTitle').textContent=(l.youtube?'🎬':'🎧')+' '+l.name;
   const mb=document.getElementById('lMediaBody');
+  if(!mb) return;
   if(l.youtube){
     mb.innerHTML=`<iframe class="yt-embed" src="https://www.youtube-nocookie.com/embed/${getYtId(l.youtube)}?rel=0&enablejsapi=1" title="${esc(l.name)}" loading="lazy" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe>`;
   } else if(l.audio){
@@ -5388,7 +5390,7 @@ async function submitListen(){
   document.getElementById('lResMsg').textContent=msgs[pct>=90?3:pct>=70?2:pct>=50?1:0];
   document.getElementById('lResSub').textContent=`Tỉ lệ đúng: ${pct}% · ${qMode==='fib'?'Điền vào chỗ trống':'Trắc nghiệm'}`;
   document.getElementById('lResult').classList.add('show');
-  document.getElementById('lSubmitBtn').disabled=true;
+  const lSubmitBtn=document.getElementById('lSubmitBtn'); if(lSubmitBtn) lSubmitBtn.disabled=true;
   const name=document.getElementById('lName').value,cls=document.getElementById('lClass').value;
   const duration=getTimerLabel();
   showToast(`🎉 ${score}/${total} (${pct}%) · ${duration}`);
