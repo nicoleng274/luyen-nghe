@@ -6802,7 +6802,7 @@ function renderSharedLessonsSection() {
 
 function loadSharedLesson(docId) {
   const lesson = sharedLessons.find(l=>l._docId===docId);
-  if (!lesson) return;
+  if (!lesson || !lesson.name) { showToast('Dữ liệu bài học không đầy đủ', 'e'); return; }
   sp('listen');
   // Use the same key as the lesson id stored on the server, or generate a temp key
   const key = lesson.id || ('_shared_'+docId);
@@ -7334,6 +7334,7 @@ function selectToeicPart(part) {
   const test = book?.tests?.[_toeicTestIdx];
   if(!test) return;
   const info = TOEIC_PARTS[part];
+  if (!info) return;
   document.getElementById('toeicPracticeTitle').textContent = `${test.name||'Test '+(_toeicTestIdx+1)} — ${info.name}: ${info.sub}`;
   document.getElementById('toeicPracticeScore').style.display='none';
   document.getElementById('toeicSubmitBtn').disabled=false;
